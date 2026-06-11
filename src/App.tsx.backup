@@ -1,0 +1,221 @@
+import { useState, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import type { AppView, Document, Task } from './types';
+import {
+  useDocuments,
+  useTasks,
+  useInbox,
+  useSettings,
+  useCustomCategories,
+  useFinances,
+  useBudgets,
+  useFamilyMembers,
+  useDebtCases,
+} from './hooks/useStorage';
+import { useTheme } from './hooks/useTheme';
+import { generateId, CATEGORIES } from './data/demoData';
+import Sidebar from './components/Sidebar';
+import ToastContainer, { useToast } from './components/Toast';
+import Dashboard from './views/Dashboard';
+import Documents from './views/Documents';
+import Tasks from './views/Tasks';
+import InboxView from './views/Inbox';
+import CalendarView from './views/Calendar';
+import Finances from './views/Finances';
+import Debts from './views/Debts';
+import Family from './views/Family';
+
+export default function App() {
+  const [currentView, setCurrentView] = useState<AppView>('dashboard');
+  const { settings, setSettings } = useSettings();
+  const { documents, addDocument, deleteDocument } = useDocuments();
+  const { tasks, addTask, updateTask, deleteTask } = useTasks();
+  const { inbox, addInboxItem, removeInboxItem } = useInbox();
+  const { customCategories, addCustomCategory, deleteCustomCategory } = useCustomCategories();
+  const { finances, addFinance, updateFinance, deleteFinance } = useFinances();
+  const { budgets, addBudget, updateBudget } = useBudgets();
+  const { members, addMember, deleteMember } = useFamilyMembers();
+  const { cases: debtCases, addCase, updateCase, deleteCase, addNote, addCommunication, linkDocument, unlinkDocument, closeCase } = useDebtCases();
+  const { toasts, addToast, removeToast } = useToast();
+
+  useTheme(settings.theme);
+
+  // Calculate active debt count for sidebar badge
+  const activeDebtCount = debtCases.filter((d) => d.status !== 'closed' && d.status !== 'resolved').length;
+
+  const handleThemeToggle = useCallback(() => {
+    setSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' });
+  }, [settings.theme, setSettings]);
+
+  const handleNavigate = useCallback((view: AppView) => {
+    setCurrentView(view);
+  }, []);
+
+  const handleUploadToInbox = useCallback(
+    (file: File) => {
+      const item = {
+        id: generateId(),
+        name: file.name,
+        date: new Date().toISOString().split('T')[0],
+        size: file.size,
+        type: (file.name.endsWith('.pdf')
+          ? 'pdf'
+          : file.name.match(/\.(jpg|jpeg|png|gif)$/)
+            ? 'image'
+            : 'doc') as 'pdf' | 'image' | 'doc',
+      };
+      addInboxItem(item);
+      addToast('success', `Fil lastet opp til innboksen`);
+    },
+    [addInboxItem, addToast]
+  );
+
+  const handleCategorizeInboxItem = useCallback(
+    (itemId: string, category: string) => {
+      const item = inbox.find((i) => i.id === itemId);
+      if (!item) return;
+      const doc = {
+        id: generateId(),
+        name: item.name,
+        category: category as string,
+        date: item.date,
+        size: item.size,
+        type: item.type,
+        tags: [],
+        notes: '',
+      };
+      addDocument(doc);
+      removeInboxItem(itemId);
+      addToast('success', 'Fil kategorisert');
+    },
+    [inbox, addDocument, removeInboxItem, addToast]
+  );
+
+  const handleDeleteInboxItem = useCallback(
+    (itemId: string) => {
+      removeInboxItem(itemId);
+      addToast('info', 'Fil slettet fra innboksen');
+    },
+    [removeInboxItem, addToast]
+  );
+
+  return (
+    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <Sidebar
+        currentView={currentView}
+        onNavigate={handleNavigate}
+        theme={settings.theme}
+        onThemeToggle={handleThemeToggle}
+        inboxCount={inbox.length}
+        activeDebtCount={activeDebtCount}
+      />
+
+      <main className="flex-1 ml-16 min-h-screen flex flex-col">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentView}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            {currentView === 'dashboard' && (
+              <Dashboard
+                documents={documents}
+                tasks={tasks}
+                inbox={inbox}
+                onNavigate={handleNavigate}
+                onUpload={handleUploadToInbox}
+                addToast={addToast}
+              />
+            )}
+            {currentView === 'documents' && (
+              <Documents
+                documents={documents}
+                customCategories={customCategories}
+                onAddDocument={(doc: Partial<Document>) => {
+                  addDocument({
+                    ...(doc as Document),
+                    id: generateId(),
+                    date: new Date().toISOString().split('T')[0],
+                    size: 0,
+                  });
+                  addToast('success', 'Dokument lagt til');
+                }}
+                onDeleteDocument={deleteDocument}
+                onAddCustomCategory={addCustomCategory}
+                onDeleteCustomCategory={deleteCustomCategory}
+                addToast={addToast}
+              />
+            )}
+            {currentView === 'tasks' && (
+              <Tasks
+                tasks={tasks}
+                onAddTask={(task: Partial<Task>) => {
+                  addTask({ ...(task as Task), id: generateId() });
+                  addToast('success', 'Oppgave opprettet');
+                }}
+                onUpdateTask={updateTask}
+                onDeleteTask={deleteTask}
+                addToast={addToast}
+              />
+            )}
+            {currentView === 'inbox' && (
+              <InboxView
+                inbox={inbox}
+                customCategories={customCategories}
+                onCategorize={handleCategorizeInboxItem}
+                onDelete={handleDeleteInboxItem}
+                onUpload={handleUploadToInbox}
+              />
+            )}
+            {currentView === 'calendar' && <CalendarView tasks={tasks} documents={documents} />}
+            {currentView === 'finances' && (
+              <Finances
+                finances={finances}
+                budgets={budgets}
+                categories={[...CATEGORIES]}
+                onAddFinance={addFinance}
+                onUpdateFinance={updateFinance}
+                onDeleteFinance={deleteFinance}
+                onAddBudget={addBudget}
+                onUpdateBudget={updateBudget}
+                addToast={addToast}
+              />
+            )}
+            {currentView === 'debts' && (
+              <Debts
+                cases={debtCases}
+                members={members}
+                documents={documents}
+                onAddCase={addCase}
+                onUpdateCase={updateCase}
+                onDeleteCase={deleteCase}
+                onAddNote={addNote}
+                onAddCommunication={addCommunication}
+                onLinkDocument={linkDocument}
+                onUnlinkDocument={unlinkDocument}
+                onCloseCase={closeCase}
+                addToast={addToast}
+              />
+            )}
+            {currentView === 'family' && (
+              <Family
+                members={members}
+                debtCases={debtCases}
+                finances={finances}
+                documents={documents}
+                onAddMember={addMember}
+                onDeleteMember={deleteMember}
+                addToast={addToast}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+    </div>
+  );
+}
