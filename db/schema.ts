@@ -9,26 +9,102 @@ import {
   int,
 } from "drizzle-orm/mysql-core";
 
-// Users table (from auth)
+// Users
 export const users = mysqlTable("users", {
   id: serial("id").primaryKey(),
-  unionId: varchar("unionId", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  passwordHash: text("passwordHash").notNull(),
   avatar: text("avatar"),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  status: mysqlEnum("status", ["active", "inactive", "suspended"])
+    .default("active")
+    .notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
-  lastSignInAt: timestamp("lastSignInAt").defaultNow().notNull(),
+  lastSignInAt: timestamp("lastSignInAt"),
 });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+// Households
+export const households = mysqlTable("households", {
+  id: serial("id").primaryKey(),
+  ownerUserId: bigint("ownerUserId", { mode: "number", unsigned: true }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["active", "inactive", "suspended"])
+    .default("active")
+    .notNull(),
+  maxFamilyMembers: int("maxFamilyMembers", { unsigned: true }).default(4).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type Household = typeof households.$inferSelect;
+export type InsertHousehold = typeof households.$inferInsert;
+
+// Plans
+export const plans = mysqlTable("plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  priceMonthly: bigint("priceMonthly", { mode: "number", unsigned: true }).notNull(),
+  includedUsers: int("includedUsers", { unsigned: true }).default(1).notNull(),
+  includedFamilyMembers: int("includedFamilyMembers", { unsigned: true })
+    .default(4)
+    .notNull(),
+  isActive: int("isActive", { unsigned: true }).default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Plan = typeof plans.$inferSelect;
+export type InsertPlan = typeof plans.$inferInsert;
+
+// Subscriptions
+export const subscriptions = mysqlTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  planId: bigint("planId", { mode: "number", unsigned: true }).notNull(),
+  status: mysqlEnum("status", [
+    "active",
+    "past_due",
+    "canceled",
+    "manual_free",
+    "inactive",
+  ])
+    .default("inactive")
+    .notNull(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  grantedByAdmin: int("grantedByAdmin", { unsigned: true }).default(0).notNull(),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+// Family Members
+export const familyMembers = mysqlTable("family_members", {
+  id: serial("id").primaryKey(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  relation: varchar("relation", { length: 50 }).notNull(),
+  color: varchar("color", { length: 20 }).notNull(),
+  notes: text("notes"),
+  dateOfBirth: varchar("dateOfBirth", { length: 10 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FamilyMember = typeof familyMembers.$inferSelect;
+export type InsertFamilyMember = typeof familyMembers.$inferInsert;
+
 // Documents
 export const documents = mysqlTable("documents", {
   id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  familyMemberId: bigint("familyMemberId", { mode: "number", unsigned: true }),
   name: varchar("name", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   date: varchar("date", { length: 10 }).notNull(),
@@ -47,12 +123,19 @@ export type InsertDocument = typeof documents.$inferInsert;
 // Tasks
 export const tasks = mysqlTable("tasks", {
   id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  familyMemberId: bigint("familyMemberId", { mode: "number", unsigned: true }),
   title: varchar("title", { length: 255 }).notNull(),
-  category: mysqlEnum("category", ["invoice", "signature", "scan", "other"]).default("other").notNull(),
+  category: mysqlEnum("category", ["invoice", "signature", "scan", "other"])
+    .default("other")
+    .notNull(),
   dueDate: varchar("dueDate", { length: 10 }).notNull(),
-  priority: mysqlEnum("priority", ["high", "medium", "low"]).default("medium").notNull(),
-  status: mysqlEnum("status", ["new", "in_progress", "done", "archived"]).default("new").notNull(),
+  priority: mysqlEnum("priority", ["high", "medium", "low"])
+    .default("medium")
+    .notNull(),
+  status: mysqlEnum("status", ["new", "in_progress", "done", "archived"])
+    .default("new")
+    .notNull(),
   tags: text("tags"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -65,7 +148,8 @@ export type InsertTask = typeof tasks.$inferInsert;
 // Inbox Items
 export const inboxItems = mysqlTable("inbox_items", {
   id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  familyMemberId: bigint("familyMemberId", { mode: "number", unsigned: true }),
   name: varchar("name", { length: 255 }).notNull(),
   date: varchar("date", { length: 10 }).notNull(),
   size: bigint("size", { mode: "number", unsigned: true }).default(0),
@@ -80,13 +164,16 @@ export type InsertInboxItem = typeof inboxItems.$inferInsert;
 // Finance Entries
 export const financeEntries = mysqlTable("finance_entries", {
   id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  familyMemberId: bigint("familyMemberId", { mode: "number", unsigned: true }),
   title: varchar("title", { length: 255 }).notNull(),
   amount: bigint("amount", { mode: "number", unsigned: true }).notNull(),
   type: mysqlEnum("type", ["income", "expense"]).default("expense").notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   date: varchar("date", { length: 10 }).notNull(),
-  status: mysqlEnum("status", ["paid", "pending", "overdue"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["paid", "pending", "overdue"])
+    .default("pending")
+    .notNull(),
   notes: text("notes"),
   isRecurring: int("isRecurring", { unsigned: true }).default(0),
   recurringInterval: varchar("recurringInterval", { length: 20 }),
@@ -99,7 +186,7 @@ export type InsertFinanceEntry = typeof financeEntries.$inferInsert;
 // Budgets
 export const budgets = mysqlTable("budgets", {
   id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   monthlyLimit: bigint("monthlyLimit", { mode: "number", unsigned: true }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -111,14 +198,25 @@ export type InsertBudget = typeof budgets.$inferInsert;
 // Debt Cases
 export const debtCases = mysqlTable("debt_cases", {
   id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  familyMemberId: bigint("familyMemberId", { mode: "number", unsigned: true }),
   title: varchar("title", { length: 255 }).notNull(),
   creditor: varchar("creditor", { length: 255 }).notNull(),
   originalAmount: bigint("originalAmount", { mode: "number", unsigned: true }).notNull(),
   currentAmount: bigint("currentAmount", { mode: "number", unsigned: true }).notNull(),
-  status: mysqlEnum("status", ["open", "negotiating", "payment_plan", "legal", "resolved", "closed"]).default("open").notNull(),
-  priority: mysqlEnum("priority", ["critical", "high", "medium", "low"]).default("medium").notNull(),
-  memberId: varchar("memberId", { length: 50 }),
+  status: mysqlEnum("status", [
+    "open",
+    "negotiating",
+    "payment_plan",
+    "legal",
+    "resolved",
+    "closed",
+  ])
+    .default("open")
+    .notNull(),
+  priority: mysqlEnum("priority", ["critical", "high", "medium", "low"])
+    .default("medium")
+    .notNull(),
   documentIds: text("documentIds"),
   interestRate: int("interestRate", { unsigned: true }),
   dueDate: varchar("dueDate", { length: 10 }),
@@ -146,7 +244,9 @@ export type InsertDebtNote = typeof debtNotes.$inferInsert;
 export const communications = mysqlTable("communications", {
   id: serial("id").primaryKey(),
   debtCaseId: bigint("debtCaseId", { mode: "number", unsigned: true }).notNull(),
-  type: mysqlEnum("type", ["letter", "email", "phone", "meeting", "sms", "other"]).default("other").notNull(),
+  type: mysqlEnum("type", ["letter", "email", "phone", "meeting", "sms", "other"])
+    .default("other")
+    .notNull(),
   direction: mysqlEnum("direction", ["sent", "received"]).default("received").notNull(),
   date: varchar("date", { length: 30 }).notNull(),
   description: text("description").notNull(),
@@ -157,25 +257,11 @@ export const communications = mysqlTable("communications", {
 export type Communication = typeof communications.$inferSelect;
 export type InsertCommunication = typeof communications.$inferInsert;
 
-// Family Members
-export const familyMembers = mysqlTable("family_members", {
-  id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  relation: varchar("relation", { length: 50 }).notNull(),
-  color: varchar("color", { length: 20 }).notNull(),
-  notes: text("notes"),
-  dateOfBirth: varchar("dateOfBirth", { length: 10 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type FamilyMember = typeof familyMembers.$inferSelect;
-export type InsertFamilyMember = typeof familyMembers.$inferInsert;
-
 // Custom Categories
 export const customCategories = mysqlTable("custom_categories", {
   id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
+  familyMemberId: bigint("familyMemberId", { mode: "number", unsigned: true }),
   label: varchar("label", { length: 100 }).notNull(),
   icon: varchar("icon", { length: 50 }).notNull(),
   color: varchar("color", { length: 20 }).notNull(),
