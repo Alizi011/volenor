@@ -81,8 +81,8 @@ app.post("/api/last_opp", async (c) => {
 
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
-// ---------------------------------------------
 
+// --- TRPC ADAPTER (MÅ ligge over app.all fallbacken!) ---
 app.use("/api/trpc/*", async (c) => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
@@ -92,6 +92,7 @@ app.use("/api/trpc/*", async (c) => {
   });
 });
 
+// Sikkerhetsnett for ukjente API-ruter
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
