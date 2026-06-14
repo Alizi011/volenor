@@ -1,13 +1,13 @@
 import { eq } from "drizzle-orm";
-import * as schema from "@db/schema";
+import { users } from "@db/schema";
 import type { InsertUser } from "@db/schema";
 import { getDb } from "./connection";
 
 export async function findUserById(id: number) {
   const rows = await getDb()
     .select()
-    .from(schema.users)
-    .where(eq(schema.users.id, id))
+    .from(users)
+    .where(eq(users.id, id))
     .limit(1);
 
   return rows.at(0);
@@ -16,22 +16,22 @@ export async function findUserById(id: number) {
 export async function findUserByEmail(email: string) {
   const rows = await getDb()
     .select()
-    .from(schema.users)
-    .where(eq(schema.users.email, email))
+    .from(users)
+    .where(eq(users.email, email))
     .limit(1);
 
   return rows.at(0);
 }
 
 export async function createUser(data: InsertUser) {
-  const result = await getDb().insert(schema.users).values(data).$returningId();
+  const result = await getDb().insert(users).values(data).$returningId();
 
   return result.at(0);
 }
 
 export async function updateLastSignIn(userId: number) {
   await getDb()
-    .update(schema.users)
+    .update(users)
     .set({ lastSignInAt: new Date() })
-    .where(eq(schema.users.id, userId));
+    .where(eq(users.id, userId));
 }
