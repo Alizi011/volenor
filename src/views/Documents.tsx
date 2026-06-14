@@ -113,6 +113,38 @@ export default function Documents({
     addToast('info', 'Dokument slettet');
   };
 
+  // Den nye opplastingsfunksjonen som håndterer FormData og sender filen live til Hostinger
+  const handleDocumentUpload = async (formData: FormData) => {
+    try {
+      const response = await fetch('https://volenor.tech/api/last_opp.php', {
+        method: 'POST',
+        body: formData, // Fetch setter automatisk multipart/form-data header
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        addToast('success', 'Dokument lastet opp og arkivert');
+        
+        // Siden staten her styres via props, bør du også trigge en oppdatering mot backend 
+        // eller kjøre onAddDocument slik at listen din oppdaterer seg i grensesnittet:
+        onAddDocument({
+          name: formData.get('name') as string,
+          category: formData.get('category') as string,
+          type: formData.get('type') as any,
+          tags: (formData.get('tags') as string).split(',').filter(Boolean),
+          notes: formData.get('notes') as string,
+          date: new Date().toISOString().slice(0, 10),
+        });
+      } else {
+        addToast('error', `Feil fra server: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Nettverksfeil ved opplasting:', error);
+      addToast('error', 'Kunne ikke koble til serveren.');
+    }
+  };
+
   const handleAddCategory = () => {
     if (!catName.trim()) return;
     const id = generateId();
@@ -151,10 +183,7 @@ export default function Documents({
         searchPlaceholder="Søk i dokumenter..."
         onSearch={setSearchQuery}
         showUpload
-        onUpload={(doc) => {
-          onAddDocument(doc);
-          addToast('success', 'Dokument lastet opp');
-        }}
+        onUpload={handleDocumentUpload} // Koblet til den nye FormData-funksjonen
       />
 
       <div className="flex flex-1 overflow-hidden">

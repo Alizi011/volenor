@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Search, Upload, X } from 'lucide-react';
-import type { FileType } from '../types';
+//import type { FileType } from '../types';
 
 interface HeaderProps {
   title: string;
   onSearch?: (query: string) => void;
-  onUpload?: (doc: { name: string; category: string; type: FileType; tags: string[]; notes: string }) => void;
+  onUpload?: (formData: FormData) => void; // Endret til FormData for ekte filoverføring
   searchPlaceholder?: string;
   showSearch?: boolean;
   showUpload?: boolean;
@@ -155,39 +155,40 @@ function UploadModal({
 }) {
   const [fileName, setFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileData, setFileData] = useState<string | undefined>(undefined);  
   const [category, setCategory] = useState<string>('invoices');
   const [notes, setNotes] = useState('');
   const [tags, setTags] = useState('');
 
-const handleFileSelect = (file: File) => {
-  setSelectedFile(file);
-  setFileName(file.name);
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    setFileData(reader.result as string);
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    setFileName(file.name);
   };
-  reader.readAsDataURL(file);
-};
 
+  const handleSubmit = () => {
+    if (!fileName.trim() || !selectedFile) {
+      alert("Vennligst velg en fil og fyll ut filnavn.");
+      return;
+    }
 
-const handleSubmit = () => {
-  if (!fileName.trim()) return;
+    // Pakker alt inn i FormData
+    const formData = new FormData();
+    formData.append('document', selectedFile);
+    formData.append('name', fileName.trim());
+    formData.append('category', category);
+    formData.append('notes', notes.trim());
+    formData.append('type', selectedFile.type.startsWith('image/') ? 'image' : 'pdf');
+    
+    // Konverterer tags-streng til kommaseparert tekst før sending
+    const processedTags = tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .join(',');
+    formData.append('tags', processedTags);
 
-  onUpload?.({
-    name: fileName,
-    category,
-    type: selectedFile?.type.startsWith('image/') ? 'image' : 'pdf',
-    tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-    notes,
-    fileData,
-    size: selectedFile?.size ?? 0,
-    date: new Date().toISOString().slice(0, 10),
-  } as any);
-
-  onClose();
-};
+    onUpload?.(formData);
+    onClose();
+  };
 
   const categories: { value: string; label: string }[] = [
     { value: 'invoices', label: 'Fakturaer og regninger' },
@@ -215,33 +216,33 @@ const handleSubmit = () => {
         </h2>
 
         <label
-  className="border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-colors duration-200 block cursor-pointer"
-  style={{ borderColor: 'var(--border-color)' }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.borderColor = 'var(--accent-yellow)';
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.borderColor = 'var(--border-color)';
-  }}
->
-  <Upload size={40} className="mx-auto mb-3" style={{ color: 'var(--text-secondary)' }} />
-  <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
-    {selectedFile ? selectedFile.name : 'Dra filer hit, eller klikk for å velge'}
-  </p>
-  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-    PDF, JPG, PNG opptil 50MB
-  </p>
+          className="border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-colors duration-200 block cursor-pointer"
+          style={{ borderColor: 'var(--border-color)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--accent-yellow)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+          }}
+        >
+          <Upload size={40} className="mx-auto mb-3" style={{ color: 'var(--text-secondary)' }} />
+          <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+            {selectedFile ? selectedFile.name : 'Dra filer hit, eller klikk for å velge'}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            PDF, JPG, PNG opptil 50MB
+          </p>
 
-  <input
-    type="file"
-    className="hidden"
-    accept=".pdf,.jpg,.jpeg,.png"
-    onChange={(e) => {
-      const file = e.target.files?.[0];
-      if (file) handleFileSelect(file);
-    }}
-  />
-</label>
+          <input
+            type="file"
+            className="hidden"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileSelect(file);
+            }}
+          />
+        </label>
 
         <div className="space-y-4">
           <div>
@@ -268,7 +269,7 @@ const handleSubmit = () => {
             </label>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value as string)}
+              onChange={(e) => setCategory(e.target.value)}
               className="w-full h-11 rounded-lg px-3 text-sm outline-none"
               style={{
                 backgroundColor: 'var(--bg-tertiary)',
@@ -323,6 +324,7 @@ const handleSubmit = () => {
 
         <div className="flex gap-3 mt-6">
           <button
+            type="button"
             onClick={onClose}
             className="flex-1 h-10 rounded-lg text-sm font-medium transition-colors"
             style={{
@@ -334,6 +336,7 @@ const handleSubmit = () => {
             Avbryt
           </button>
           <button
+            type="button"
             onClick={handleSubmit}
             className="flex-1 h-10 rounded-lg text-sm font-medium transition-all"
             style={{
