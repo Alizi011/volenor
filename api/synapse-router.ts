@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql} from "drizzle-orm";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
@@ -47,18 +47,22 @@ async function getHouseholdIdForUser(userId: number) {
 
 export const synapseRouter = createRouter({
   documents: createRouter({
-    list: authedQuery.query(async ({ ctx }) => {
+   list: authedQuery.query(async ({ ctx }) => {
       const householdId = await getHouseholdIdForUser(ctx.user.id);
 
-      const rows = await db()
-        .select()
-        .from(documents)
-        .where(eq(documents.householdId, householdId))
-        .orderBy(desc(documents.createdAt));
+      // Vi kjører spørringen
+      const rawRows = await db().execute(
+        sql`SELECT * FROM documents WHERE householdId = ${householdId} ORDER BY createdAt DESC`
+      );
+      
+      // Vi bruker 'as unknown as any[]' for å fortelle TypeScript at dette ER rader
+      const documentsList = (rawRows as unknown as any[]) || [];
 
-      return rows.map((r) => ({
+      return documentsList.map((r) => ({
         ...r,
+        size: r.size ? Number(r.size) : 0,
         tags: parseJson<string[]>(r.tags, []),
+        fileData: r.fileData || null
       }));
     }),
 
@@ -87,7 +91,8 @@ export const synapseRouter = createRouter({
             size: input.size ?? 0,
             tags: input.tags ?? "[]",
             notes: input.notes ?? "",
-          });
+            fileData: input.fileData ?? null, // Sikrer at fileData sendes som null hvis den mangler
+          } as any);
 
         return { id: Number(result[0].insertId) };
       }),
@@ -188,7 +193,7 @@ export const synapseRouter = createRouter({
             ...input,
             householdId,
             size: input.size ?? 0,
-          });
+          } as any);
 
         return { id: Number(result[0].insertId) };
       }),
@@ -518,7 +523,7 @@ export const synapseRouter = createRouter({
         }
 
         return { success: true };
-      }),
+          }),
   }),
 });
 
