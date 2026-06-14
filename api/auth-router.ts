@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
-import { createRouter, authedQuery, publicQuery } from "./middleware";
+// 1. ENDRET: Lagt til publicProcedure her (eller bruk publicMutation hvis det er det filen din eksporterer)
+import { createRouter, authedQuery, publicQuery, publicProcedure } from "./middleware";
 import { getDb } from "./queries/connection";
 import { createUser, findUserByEmail, updateLastSignIn } from "./queries/users";
 import { signSessionToken } from "./auth/session";
@@ -30,7 +31,8 @@ function setSessionCookie(headers: Headers, req: Request, token: string) {
 }
 
 export const authRouter = createRouter({
-  register: publicQuery
+  // 2. ENDRET: Byttet fra publicQuery til publicProcedure siden dette er en mutasjon (.mutation)
+  register: publicProcedure
     .input(
       z.object({
         name: z.string().min(1),
@@ -113,7 +115,8 @@ export const authRouter = createRouter({
       };
     }),
 
-  login: publicQuery
+  // 3. ENDRET: Byttet fra publicQuery til publicProcedure slik at nettverkskallet sendes som POST
+  login: publicProcedure
     .input(
       z.object({
         email: z.string().email(),
