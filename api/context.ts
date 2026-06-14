@@ -19,8 +19,13 @@ export async function createContext(
     resHeaders: opts.resHeaders,
   };
 
-  const cookies = cookie.parse(opts.req.headers.get("cookie") || "");
+  const cookieHeader = opts.req.headers.get("cookie");
+  const cookies = cookie.parse(cookieHeader || "");
   const token = cookies[Session.cookieName];
+
+  console.log("COOKIE HEADER:", cookieHeader);
+  console.log("SESSION COOKIE NAME:", Session.cookieName);
+  console.log("TOKEN EXISTS:", !!token);
 
   if (!token) {
     return ctx;
@@ -28,11 +33,15 @@ export async function createContext(
 
   const session = await verifySessionToken(token);
 
+  console.log("SESSION:", session);
+
   if (!session) {
     return ctx;
   }
 
   const user = await findUserById(session.userId);
+
+  console.log("USER FOUND:", !!user, user?.email);
 
   if (user) {
     ctx.user = user;
