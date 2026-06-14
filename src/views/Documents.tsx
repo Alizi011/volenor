@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
@@ -68,11 +68,22 @@ export default function Documents({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; docId: string } | null>(null);
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false); // Ny tilstand for å styre opplastingsmodalen herfra
 
-  // Category form state
+  // Kategori-skjema tilstander
   const [catName, setCatName] = useState('');
   const [catIcon, setCatIcon] = useState(AVAILABLE_ICONS[0]);
   const [catColor, setCatColor] = useState(AVAILABLE_COLORS[0]);
+
+  // --- NYE LIVLIGE OPPSETT FOR EKTE FILOPPLASTING ---
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadForm, setUploadForm] = useState({
+    name: '',
+    category: 'Fakturaer',
+    tags: '',
+    notes: ''
+  });
 
   const filteredDocs = useMemo(() => {
     let filtered = documents;
@@ -113,35 +124,85 @@ export default function Documents({
     addToast('info', 'Dokument slettet');
   };
 
-  // Den nye opplastingsfunksjonen som håndterer FormData og sender filen live til Hostinger
-  const handleDocumentUpload = async (formData: FormData) => {
+  // --- FUNKSJONER FOR KLIKK OG DRAG & DROP PÅ DEN STIPLED BOKSEN ---
+  const handleBoxClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setupFileInfo(e.target.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setupFileInfo(e.dataTransfer.files[0]);
+    }
+  };
+
+  const setupFileInfo = (file: File) => {
+    setSelectedFile(file);
+    setUploadForm(prev => ({ ...prev, name: file.name })); // Fyller automatisk filnavn-feltet
+  };
+
+  // Sender dataene til det nye Hono-endepunktet ditt på serveren
+  const handleUploadSubmit = async () => {
+    if (!selectedFile) {
+      addToast('warning', 'Vennligst velg en fil først.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('document', selectedFile);
+    formData.append('name', uploadForm.name);
+    formData.append('category', uploadForm.category);
+    formData.append('tags', uploadForm.tags);
+    formData.append('notes', uploadForm.notes);
+
+    // Finn filtype basert på etternavn
+    const ext = selectedFile.name.split('.').pop()?.toLowerCase();
+    const docType = ext === 'pdf' ? 'pdf' : ['png', 'jpg', 'jpeg'].includes(ext || '') ? 'image' : 'doc';
+    formData.append('type', docType);
+
     try {
-      const response = await fetch('https://volenor.tech/api/last_opp.php', {
+      // Vi bruker nå den rene relative API-stien siden Hono kjører på /api
+      const response = await fetch('/api/last_opp', {
         method: 'POST',
-        body: formData, // Fetch setter automatisk multipart/form-data header
+        body: formData,
       });
 
       const result = await response.json();
 
       if (result.success) {
-        addToast('success', 'Dokument lastet opp og arkivert');
+        addToast('success', 'Dokumentet ble fysisk lagret på serveren!');
         
-        // Siden staten her styres via props, bør du også trigge en oppdatering mot backend 
-        // eller kjøre onAddDocument slik at listen din oppdaterer seg i grensesnittet:
+        // Oppdaterer frontend-listen med en gang
         onAddDocument({
-          name: formData.get('name') as string,
-          category: formData.get('category') as string,
-          type: formData.get('type') as any,
-          tags: (formData.get('tags') as string).split(',').filter(Boolean),
-          notes: formData.get('notes') as string,
+          name: uploadForm.name,
+          category: uploadForm.category,
+          type: docType as any,
+          tags: uploadForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+          notes: uploadForm.notes,
           date: new Date().toISOString().slice(0, 10),
+          size: selectedFile.size,
         });
+
+        // Nullstill skjemaet og lukk modalen
+        setSelectedFile(null);
+        setUploadForm({ name: '', category: 'Fakturaer', tags: '', notes: '' });
+        setShowUploadModal(false);
       } else {
-        addToast('error', `Feil fra server: ${result.message}`);
+        addToast('error', `Feil fra Hono-server: ${result.message}`);
       }
     } catch (error) {
       console.error('Nettverksfeil ved opplasting:', error);
-      addToast('error', 'Kunne ikke koble til serveren.');
+      addToast('error', 'Kunne ikke opprette kontakt med Hono-backenden.');
     }
   };
 
@@ -183,7 +244,7 @@ export default function Documents({
         searchPlaceholder="Søk i dokumenter..."
         onSearch={setSearchQuery}
         showUpload
-        onUpload={handleDocumentUpload} // Koblet til den nye FormData-funksjonen
+        onUpload={() => setShowUploadModal(true)} // Endret til å bare åpne modalen vår herfra!
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -248,7 +309,6 @@ export default function Documents({
             })}
           </div>
 
-          {/* Add category button */}
           <button
             onClick={() => setShowCategoryModal(true)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left mt-3 transition-all duration-200"
@@ -269,7 +329,6 @@ export default function Documents({
 
         {/* File list */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Toolbar */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -332,7 +391,6 @@ export default function Documents({
             </div>
           </div>
 
-          {/* File display */}
           {filteredDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
               <FolderOpen size={64} className="mb-4" style={{ color: 'var(--text-secondary)', opacity: 0.3 }} />
@@ -469,6 +527,133 @@ export default function Documents({
           )}
         </div>
       </div>
+
+      {/* --- LIVE FILOPPLASTINGS MODAL --- */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[110]"
+              style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+              onClick={() => setShowUploadModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[120] flex items-center justify-center pointer-events-none"
+            >
+              <div
+                className="w-full max-w-md rounded-2xl p-6 pointer-events-auto"
+                style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Last opp dokument
+                  </h2>
+                  <button onClick={() => setShowUploadModal(false)} className="p-1 rounded-lg" style={{ color: 'var(--text-secondary)' }}>
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Det ekte, usynlige inputet */}
+                  <input 
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                  />
+
+                  {/* Stiplet boks for Klikk & Drop */}
+                  <div 
+                    onClick={handleBoxClick}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    className="border-2 border-dashed border-yellow-400 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-900 transition-all text-center"
+                  >
+                    <FolderInput size={32} className="text-yellow-400 mb-2" />
+                    <p className="text-sm font-medium text-zinc-300">
+                      {selectedFile ? `Valgt: ${selectedFile.name}` : "Dra filer hit, eller klikk for å velge"}
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">PDF, JPG, PNG opptil 50MB</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Filnavn</label>
+                    <input
+                      type="text"
+                      value={uploadForm.name}
+                      onChange={(e) => setUploadForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+                      style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Kategori</label>
+                    <select
+                      value={uploadForm.category}
+                      onChange={(e) => setUploadForm(prev => ({ ...prev, category: e.target.value }))}
+                      className="w-full h-11 rounded-lg px-3 text-sm outline-none appearance-none"
+                      style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                    >
+                      {allCategories.map(c => (
+                        <option key={c.id} value={c.id} style={{ backgroundColor: 'var(--bg-secondary)' }}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Tags</label>
+                    <input
+                      type="text"
+                      value={uploadForm.tags}
+                      onChange={(e) => setUploadForm(prev => ({ ...prev, tags: e.target.value }))}
+                      placeholder="Skilt med komma..."
+                      className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+                      style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Notater</label>
+                    <textarea
+                      value={uploadForm.notes}
+                      onChange={(e) => setUploadForm(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Valgfrie notater..."
+                      className="w-full h-20 rounded-lg p-3 text-sm outline-none resize-none"
+                      style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-5">
+                  <button
+                    onClick={() => setShowUploadModal(false)}
+                    className="flex-1 h-10 rounded-lg text-sm font-medium"
+                    style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                  >
+                    Avbryt
+                  </button>
+                  <button
+                    onClick={handleUploadSubmit}
+                    className="flex-1 h-10 rounded-lg text-sm font-medium"
+                    style={{ backgroundColor: 'var(--accent-yellow)', color: '#0a0a0a' }}
+                  >
+                    Lagre
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Context menu */}
       <AnimatePresence>
