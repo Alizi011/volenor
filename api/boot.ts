@@ -12,6 +12,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 // --- KORREKTE IMPORTER BASERT PÅ PROSJEKTETS STRUKTUR ---
+// Vi la til 'sql' her
+import { sql } from "drizzle-orm"; 
 import * as schema from "@db/schema";
 import { getDb } from "./queries/connection"; 
 
@@ -45,7 +47,7 @@ app.post("/api/last_opp", async (c) => {
     const buffer = Buffer.from(arrayBuffer);
     fs.writeFileSync(targetPath, buffer);
 
-    // Den relative stien lagres i 'fileData'-kolonnen i databasen
+    // Den relative stien lagres i databasen
     const relativePath = `opplastede_dokumenter/${uniqueName}`;
     const dateStr = new Date().toISOString().slice(0, 10);
 
@@ -57,19 +59,13 @@ app.post("/api/last_opp", async (c) => {
     const householdId = parseInt((body["householdId"] as string) || "1");
     const familyMemberId = body["familyMemberId"] ? parseInt(body["familyMemberId"] as string) : null;
 
-    // Her bruker vi getDb() og schema.documents nøyaktig slik resten av appen din gjør!
-    await getDb().insert(schema.documents).values({
-      householdId,
-      familyMemberId,
-      name,
-      category,
-      date: dateStr,
-      size: file.size, 
-      type,
-      tags,
-      notes,
-      fileData: relativePath, 
-    });
+    // Her bruker vi getDb().execute(sql`...`) for å tvinge inn fileData feltet.
+    // Vi setter tags til "[]" som standard streng i stede for null.
+    await getDb().execute(sql`
+      INSERT INTO documents 
+      (householdId, familyMemberId, name, category, date, size, type, tags, notes, fileData) 
+      VALUES (${householdId}, ${familyMemberId}, ${name}, ${category}, ${dateStr}, ${file.size}, ${type}, ${tags ?? "[]"}, ${notes}, ${relativePath})
+    `);
 
     return c.json({ success: true, message: "Fil lagret fysisk og registrert i MariaDB!" });
 
@@ -82,7 +78,7 @@ app.post("/api/last_opp", async (c) => {
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
 
-// --- TRPC ADAPTER (MÅ ligge over app.all fallbacken!) ---
+// --- TRPC ADAPTER ---
 app.use("/api/trpc/*", async (c) => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
@@ -92,7 +88,7 @@ app.use("/api/trpc/*", async (c) => {
   });
 });
 
-// Sikkerhetsnett for ukjente API-ruter
+// Fallback for ukjente API-ruter
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
