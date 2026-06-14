@@ -59,7 +59,7 @@ export default function Sidebar({
       <div className="mb-6 cursor-pointer" onClick={() => onNavigate('dashboard')}>
         <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm"
           style={{ backgroundColor: 'var(--accent-yellow)', color: '#0a0a0a' }}>
-          S
+          V
         </div>
       </div>
 

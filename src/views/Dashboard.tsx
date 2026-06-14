@@ -115,7 +115,7 @@ export default function Dashboard({
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <Header title="SYNAPSE" />
+      <Header title="VOLENOR" />
 
       <div className="flex-1 px-8 py-6 max-w-[1440px] mx-auto w-full">
         {/* Search */}
