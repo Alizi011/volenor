@@ -154,21 +154,40 @@ function UploadModal({
   onUpload: HeaderProps['onUpload'];
 }) {
   const [fileName, setFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileData, setFileData] = useState<string | undefined>(undefined);  
   const [category, setCategory] = useState<string>('invoices');
   const [notes, setNotes] = useState('');
   const [tags, setTags] = useState('');
 
-  const handleSubmit = () => {
-    if (!fileName.trim()) return;
-    onUpload?.({
-      name: fileName,
-      category,
-      type: 'pdf',
-      tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-      notes,
-    });
-    onClose();
+const handleFileSelect = (file: File) => {
+  setSelectedFile(file);
+  setFileName(file.name);
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    setFileData(reader.result as string);
   };
+  reader.readAsDataURL(file);
+};
+
+
+const handleSubmit = () => {
+  if (!fileName.trim()) return;
+
+  onUpload?.({
+    name: fileName,
+    category,
+    type: selectedFile?.type.startsWith('image/') ? 'image' : 'pdf',
+    tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+    notes,
+    fileData,
+    size: selectedFile?.size ?? 0,
+    date: new Date().toISOString().slice(0, 10),
+  } as any);
+
+  onClose();
+};
 
   const categories: { value: string; label: string }[] = [
     { value: 'invoices', label: 'Fakturaer og regninger' },
@@ -195,24 +214,34 @@ function UploadModal({
           Last opp dokument
         </h2>
 
-        <div
-          className="border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-colors duration-200"
-          style={{ borderColor: 'var(--border-color)' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--accent-yellow)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border-color)';
-          }}
-        >
-          <Upload size={40} className="mx-auto mb-3" style={{ color: 'var(--text-secondary)' }} />
-          <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
-            Dra filer hit, eller klikk for å velge
-          </p>
-          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            PDF, JPG, PNG opptil 50MB
-          </p>
-        </div>
+        <label
+  className="border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-colors duration-200 block cursor-pointer"
+  style={{ borderColor: 'var(--border-color)' }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.borderColor = 'var(--accent-yellow)';
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.borderColor = 'var(--border-color)';
+  }}
+>
+  <Upload size={40} className="mx-auto mb-3" style={{ color: 'var(--text-secondary)' }} />
+  <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+    {selectedFile ? selectedFile.name : 'Dra filer hit, eller klikk for å velge'}
+  </p>
+  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+    PDF, JPG, PNG opptil 50MB
+  </p>
+
+  <input
+    type="file"
+    className="hidden"
+    accept=".pdf,.jpg,.jpeg,.png"
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (file) handleFileSelect(file);
+    }}
+  />
+</label>
 
         <div className="space-y-4">
           <div>

@@ -25,14 +25,29 @@ export function useSynapseDocuments() {
   return {
     documents: (data ?? []).map(fmtDoc),
     isLoading,
-    addDocument: useCallback((doc: any) => create.mutate(doc), [create]),
+    addDocument: useCallback(
+  (doc: any) =>
+    create.mutate({
+      name: doc.name,
+      category: doc.category,
+      date: doc.date ?? new Date().toISOString().slice(0, 10),
+      size: doc.size ?? 0,
+      type: doc.type ?? "pdf",
+      tags: Array.isArray(doc.tags) ? JSON.stringify(doc.tags) : doc.tags ?? "[]",
+      notes: doc.notes ?? "",
+      fileData: doc.fileData,
+      familyMemberId: doc.familyMemberId,
+    }),
+  [create],
+),
+
     deleteDocument: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
   };
 }
 
 export function useSynapseTasks() {
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.synapse.tasks.list.useQuery();
+  const { data, isLoading } = trpc.synapse.tasks.list.useQuery()
   const create = trpc.synapse.tasks.create.useMutation({ onSuccess: () => utils.synapse.tasks.list.invalidate() });
   const update = trpc.synapse.tasks.update.useMutation({ onSuccess: () => utils.synapse.tasks.list.invalidate() });
   const del = trpc.synapse.tasks.delete.useMutation({ onSuccess: () => utils.synapse.tasks.list.invalidate() });
