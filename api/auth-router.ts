@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
-// 1. ENDRET: Lagt til publicProcedure her (eller bruk publicMutation hvis det er det filen din eksporterer)
-import { createRouter, authedQuery, publicQuery, publicProcedure } from "./middleware";
+// Henter kun de faktiske eksportene fra middleware.ts
+import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { createUser, findUserByEmail, updateLastSignIn } from "./queries/users";
 import { signSessionToken } from "./auth/session";
@@ -31,8 +31,8 @@ function setSessionCookie(headers: Headers, req: Request, token: string) {
 }
 
 export const authRouter = createRouter({
-  // 2. ENDRET: Byttet fra publicQuery til publicProcedure siden dette er en mutasjon (.mutation)
-  register: publicProcedure
+  // Bruker publicQuery (t.procedure) + .mutation() -> Genererer riktig POST over nettverket
+  register: publicQuery
     .input(
       z.object({
         name: z.string().min(1),
@@ -115,8 +115,8 @@ export const authRouter = createRouter({
       };
     }),
 
-  // 3. ENDRET: Byttet fra publicQuery til publicProcedure slik at nettverkskallet sendes som POST
-  login: publicProcedure
+  // Bruker publicQuery (t.procedure) + .mutation() -> Fikser 405/500-feilen permanent på innloggingen
+  login: publicQuery
     .input(
       z.object({
         email: z.string().email(),
