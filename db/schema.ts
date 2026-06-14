@@ -90,14 +90,14 @@ export type InsertFamilyMember = typeof familyMembers.$inferInsert;
 // Documents
 export const documents = mysqlTable("documents", {
   id: id(),
-  householdId: bigint("householdId", { mode: "number", unsigned: true }).notNull(),
-  familyMemberId: bigint("familyMemberId", { mode: "number", unsigned: true }),
+  householdId: int("householdId", { unsigned: true }).notNull(), // Endret til int unsigned for å matche id()
+  familyMemberId: int("familyMemberId", { unsigned: true }),     // Endret til int unsigned for å matche id()
   name: varchar("name", { length: 255 }).notNull(),
-  category: varchar("category", { length: 100 }).notNull(),
+  category: varchar("category", { length: 100 }).default("Fakturaer").notNull(), // Lagt til default for å hindre krasj
   date: varchar("date", { length: 10 }).notNull(),
   size: bigint("size", { mode: "number", unsigned: true }).default(0),
   type: mysqlEnum("type", ["pdf", "image", "doc"]).default("pdf").notNull(),
-  tags: text("tags"),
+  tags: text("tags").default("[]").notNull(), // Lagt til default "[]" som matcher databasen og tRPC-ruteren
   notes: text("notes"),
   fileData: text("fileData"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

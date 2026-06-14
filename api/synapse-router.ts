@@ -124,15 +124,16 @@ export const synapseRouter = createRouter({
   }),
 
   tasks: createRouter({
-    list: authedQuery.query(async ({ ctx }) => {
-      const householdId = await getHouseholdIdForUser(ctx.user.id);
+// Nå kan documents.list i api/synapse-router.ts skrives superrent og typesikkert:
+list: authedQuery.query(async ({ ctx }) => {
+  const householdId = await getHouseholdIdForUser(ctx.user.id);
 
-      return db()
-        .select()
-        .from(tasks)
-        .where(eq(tasks.householdId, householdId))
-        .orderBy(desc(tasks.createdAt));
-    }),
+  return await db()
+    .select()
+    .from(documents)
+    .where(eq(documents.householdId, householdId))
+    .orderBy(desc(documents.id)); // Sorterer kjapt etter ID
+}),
 
     create: authedQuery
       .input(
