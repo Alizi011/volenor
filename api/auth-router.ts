@@ -124,40 +124,53 @@ export const authRouter = createRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await findUserByEmail(input.email);
+      try {
+        console.log("LOGIN START:", input.email);
 
-      if (!user) {
-        throw new Error("Feil e-post eller passord.");
+        const user = await findUserByEmail(input.email);
+        console.log("LOGIN USER FOUND:", !!user, user?.id);
+
+        if (!user) {
+          throw new Error("Feil e-post eller passord.");
+        }
+
+        if (user.status !== "active") {
+          throw new Error("Brukeren er ikke aktiv.");
+        }
+
+        const validPassword = await bcrypt.compare(
+          input.password,
+          user.passwordHash,
+        );
+
+        console.log("LOGIN PASSWORD VALID:", validPassword);
+
+        if (!validPassword) {
+          throw new Error("Feil e-post eller passord.");
+        }
+
+        await updateLastSignIn(user.id);
+        console.log("LOGIN UPDATED LAST SIGN IN");
+
+        const token = await signSessionToken({ userId: user.id });
+        console.log("LOGIN TOKEN CREATED");
+
+        setSessionCookie(ctx.resHeaders, ctx.req, token);
+        console.log("LOGIN COOKIE SET");
+
+        return {
+          success: true,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+        };
+      } catch (error) {
+        console.error("LOGIN ERROR:", error);
+        throw error;
       }
-
-      if (user.status !== "active") {
-        throw new Error("Brukeren er ikke aktiv.");
-      }
-
-      const validPassword = await bcrypt.compare(
-        input.password,
-        user.passwordHash,
-      );
-
-      if (!validPassword) {
-        throw new Error("Feil e-post eller passord.");
-      }
-
-      await updateLastSignIn(user.id);
-
-      const token = await signSessionToken({ userId: user.id });
-
-      setSessionCookie(ctx.resHeaders, ctx.req, token);
-
-      return {
-        success: true,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      };
     }),
 
   me: authedQuery.query((opts) => opts.ctx.user),
