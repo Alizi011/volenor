@@ -71,16 +71,18 @@ export default function Sidebar({
           const isHovered = hoveredItem === item.view;
 
           return (
-            <button
-              key={item.view}
-              onClick={() => onNavigate(item.view)}
-              onMouseEnter={() => setHoveredItem(item.view)}
-              onMouseLeave={() => setHoveredItem(null)}
-              className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
-              style={{
-                backgroundColor: isActive ? 'var(--bg-tertiary)' : 'transparent',
-              }}
-            >
+           <button
+            key={item.view}
+            aria-label={item.label}
+            title={item.label}
+            onClick={() => onNavigate(item.view)}
+            onMouseEnter={() => setHoveredItem(item.view)}
+            onMouseLeave={() => setHoveredItem(null)}
+            className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
+            style={{
+              backgroundColor: isActive ? 'var(--bg-tertiary)' : 'transparent',
+            }}
+          >
               <Icon
                 size={22}
                 style={{
@@ -136,11 +138,13 @@ export default function Sidebar({
       <div className="flex flex-col items-center gap-1">
         {/* Profile */}
         <button
-          onClick={() => navigate('/profile')}
-          onMouseEnter={() => setHoveredItem('profile')}
-          onMouseLeave={() => setHoveredItem(null)}
-          className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
-        >
+        aria-label="Profil"
+        title="Profil"
+        onClick={() => navigate('/profile')}
+        onMouseEnter={() => setHoveredItem('profile')}
+        onMouseLeave={() => setHoveredItem(null)}
+        className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
+      >
           <UserCircle
             size={22}
             style={{
@@ -170,11 +174,13 @@ export default function Sidebar({
         {/* Admin (conditional) */}
         {isAdmin && (
           <button
-            onClick={() => navigate('/admin')}
-            onMouseEnter={() => setHoveredItem('admin')}
-            onMouseLeave={() => setHoveredItem(null)}
-            className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
-          >
+          aria-label="Admin"
+          title="Admin"
+          onClick={() => navigate('/admin')}
+          onMouseEnter={() => setHoveredItem('admin')}
+          onMouseLeave={() => setHoveredItem(null)}
+          className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
+        >
             <Shield
               size={22}
               style={{
@@ -209,6 +215,7 @@ export default function Sidebar({
           onMouseLeave={() => setHoveredItem(null)}
           className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
         >
+          
           {theme === 'dark' ? (
             <Sun size={20} style={{ color: 'var(--text-secondary)' }} />
           ) : (
