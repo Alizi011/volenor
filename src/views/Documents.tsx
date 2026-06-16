@@ -482,7 +482,7 @@ export default function Documents({
                 const cat = getCategoryInfo(doc.category);
                 return (
                   <motion.div
-                    key={doc.id}
+                    key={doc.id ?? `doc-grid-${i}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}

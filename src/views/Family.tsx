@@ -114,7 +114,16 @@ export default function Family({ members, debtCases, finances: _finances, docume
             const age = calcAge(member.dateOfBirth);
             const memberDebts = getMemberDebts(member.id);
             return (
-              <motion.div key={member.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+              <motion.div
+              
+               key={member.id ?? `member-${i}`}  
+              
+              initial={{ opacity: 0, y: 10 }} 
+              
+              animate={{ opacity: 1, y: 0 }} 
+              
+              transition={{ delay: i * 0.06 }}
+
                 className="rounded-xl p-5 cursor-pointer transition-all duration-200" style={{ backgroundColor: 'var(--bg-secondary)' }}
                 onClick={() => setSelectedMember(member)}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}

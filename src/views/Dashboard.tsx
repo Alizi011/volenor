@@ -368,7 +368,7 @@ export default function Dashboard({
           <div className="space-y-3">
             {recentActivity.map((doc, i) => (
               <motion.div
-                key={doc.id}
+                key={doc.id ?? `recent-doc-${i}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 + i * 0.06 }}
