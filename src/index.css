@@ -76,7 +76,13 @@
   * {
     @apply border-[var(--border-color)];
   }
+ html,
+  :host {
+    text-size-adjust: 100%;
+  }
 
+  body {
+    
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--bg-primary);
