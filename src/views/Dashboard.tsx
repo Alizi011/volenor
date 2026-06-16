@@ -326,7 +326,7 @@ export default function Dashboard({
             { icon: Calendar, label: 'Vis kalender', action: 'calendar' },
           ].map((action) => (
             <button
-              key={action.action}
+              key={action.label ?? `action-${i}`}
               onClick={() => {
                 if (action.action === 'upload') {
                   document.getElementById('dashboard-upload')?.click();
