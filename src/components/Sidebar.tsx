@@ -209,13 +209,15 @@ export default function Sidebar({
         )}
 
         {/* Theme toggle */}
-        <button
-          onClick={onThemeToggle}
-          onMouseEnter={() => setHoveredItem('theme')}
-          onMouseLeave={() => setHoveredItem(null)}
-          className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
-        >
-          
+       <button
+        aria-label={theme === 'dark' ? 'Bytt til lyst tema' : 'Bytt til mørkt tema'}
+        title={theme === 'dark' ? 'Bytt til lyst tema' : 'Bytt til mørkt tema'}
+        onClick={onThemeToggle}
+        onMouseEnter={() => setHoveredItem('theme')}
+        onMouseLeave={() => setHoveredItem(null)}
+        className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200"
+      >
+
           {theme === 'dark' ? (
             <Sun size={20} style={{ color: 'var(--text-secondary)' }} />
           ) : (
