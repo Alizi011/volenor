@@ -219,7 +219,14 @@ export default function Debts({
             { label: 'Gjeld totalt', value: formatNOK(stats.totalDebt), icon: Gavel, color: 'var(--text-primary)' },
             { label: 'Totalt antall', value: stats.total, icon: FileText, color: 'var(--accent-blue)' },
           ].map((s, i) => (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+            <motion.div key={s.label}
+            
+            initial={{ opacity: 0, y: 20 }} 
+            
+            animate={{ opacity: 1, y: 0 }} 
+            
+            transition={{ delay: i * 0.08 }}
+
               className="rounded-xl p-5" style={{ backgroundColor: 'var(--bg-secondary)' }}>
               <div className="flex items-center gap-2 mb-2">
                 <s.icon size={16} style={{ color: s.color }} />
@@ -255,8 +262,10 @@ export default function Debts({
             {filteredCases.map((c, i) => {
               const StatusIcon = STATUS_CONFIG[c.status].icon;
               const progress = c.originalAmount > 0 ? Math.round(((c.originalAmount - c.currentAmount) / c.originalAmount) * 100) : 0;
+              
+              console.log("Debt case:", c);
               return (
-                <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                <motion.div key={c.id ?? `debt-case-${i}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   className="rounded-xl p-5 cursor-pointer transition-all duration-200" style={{ backgroundColor: 'var(--bg-secondary)' }}
                   onClick={() => setSelectedCase(c)}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}

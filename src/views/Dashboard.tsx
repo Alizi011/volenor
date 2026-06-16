@@ -354,12 +354,14 @@ export default function Dashboard({
             </button>
           ))}
           <input
-            id="dashboard-upload"
-            type="file"
-            className="hidden"
-            onChange={handleFileUpload}
-            accept=".pdf,.jpg,.jpeg,.png"
-          />
+          id="dashboard-upload"
+          type="file"
+          className="hidden"
+          onChange={handleFileUpload}
+          accept=".pdf,.jpg,.jpeg,.png"
+          aria-label="Last opp dokument"
+          title="Last opp dokument"
+        />
         </div>
 
         {/* Recent activity */}

@@ -88,6 +88,7 @@ export default function Family({ members, debtCases, finances: _finances, docume
             { label: 'Familiemedlemmer', value: members.length, icon: Users, color: 'var(--accent-blue)' },
             { label: 'Aktive gjeldssaker', value: debtCases.filter((d) => d.status !== 'closed' && d.status !== 'resolved').length, icon: Gavel, color: 'var(--accent-orange)' },
             { label: 'Total gjeld', value: formatNOK(debtCases.filter((d) => d.status !== 'closed' && d.status !== 'resolved').reduce((s, d) => s + d.currentAmount, 0)), icon: CreditCard, color: 'var(--accent-red)' },
+         
           ].map((s, i) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
               className="rounded-xl p-5" style={{ backgroundColor: 'var(--bg-secondary)' }}>
@@ -98,6 +99,7 @@ export default function Family({ members, debtCases, finances: _finances, docume
               <div className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>{s.value}</div>
             </motion.div>
           ))}
+
         </div>
 
         {/* Add member */}
