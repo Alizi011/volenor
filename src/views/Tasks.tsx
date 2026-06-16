@@ -254,13 +254,13 @@ export default function Tasks({ tasks, onAddTask, onUpdateTask, onDeleteTask, ad
 
                 {/* Column content */}
                 <div className="flex-1 p-3 space-y-3 min-h-[400px]">
-                  {colTasks.map((task) => {
+                  {colTasks.map((task, i) => {
                     const cat = TASK_CATEGORIES.find((c) => c.id === task.category);
                     const overdue = isOverdue(task.dueDate);
 
                     return (
                       <motion.div
-                        key={task.id}
+                        key={task.id ?? `task-${i}`}
                         layout
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}

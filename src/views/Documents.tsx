@@ -906,9 +906,9 @@ export default function Documents({
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Farge</label>
                     <div className="grid grid-cols-9 gap-2">
-                      {AVAILABLE_COLORS.map((color) => (
-                        <button
-                          key={color}
+                      {AVAILABLE_COLORS.map((color, i) => (
+                      <button
+                        key={`${color}-${i}`}
                           onClick={() => setCatColor(color)}
                           className="w-8 h-8 rounded-lg transition-all"
                           style={{

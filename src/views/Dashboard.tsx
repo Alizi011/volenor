@@ -324,16 +324,18 @@ export default function Dashboard({
             { icon: CheckSquare, label: 'Nytt gjøremål', action: 'tasks' },
             { icon: Inbox, label: 'Åpne innboks', action: 'inbox' },
             { icon: Calendar, label: 'Vis kalender', action: 'calendar' },
+
           ].map((action) => (
-            <button
-              key={action.label ?? `action-${i}`}
-              onClick={() => {
-                if (action.action === 'upload') {
-                  document.getElementById('dashboard-upload')?.click();
-                } else {
-                  onNavigate(action.action as AppView);
-                }
-              }}
+          <button
+            key={action.label}
+            onClick={() => {
+              if (action.action === 'upload') {
+                document.getElementById('dashboard-upload')?.click();
+              } else {
+                onNavigate(action.action as AppView);
+              }
+            }}
+
               className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm transition-all duration-200"
               style={{
                 backgroundColor: 'var(--bg-tertiary)',

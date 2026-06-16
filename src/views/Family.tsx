@@ -115,7 +115,7 @@ export default function Family({ members, debtCases, finances: _finances, docume
             const memberDebts = getMemberDebts(member.id);
             return (
               <motion.div
-              
+
                key={member.id ?? `member-${i}`}  
               
               initial={{ opacity: 0, y: 10 }} 
@@ -218,10 +218,25 @@ export default function Family({ members, debtCases, finances: _finances, docume
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Farge</label>
                     <div className="grid grid-cols-9 gap-2">
-                      {AVAILABLE_COLORS.map((color) => (
-                        <button key={color} onClick={() => setFormColor(color)} className="w-8 h-8 rounded-full transition-all"
-                          style={{ backgroundColor: color, border: formColor === color ? '3px solid var(--text-primary)' : '3px solid transparent', transform: formColor === color ? 'scale(1.15)' : 'scale(1)' }} />
-                      ))}
+
+                    {AVAILABLE_COLORS.map((color, i) => (
+                    <button
+                      key={`${color}-${i}`}
+                      onClick={() => setFormColor(color)}
+                      className="w-8 h-8 rounded-full transition-all"
+                      style={{
+                        backgroundColor: color,
+                        border: formColor === color
+                          ? '3px solid var(--text-primary)'
+                          : '3px solid transparent',
+                        transform: formColor === color
+                          ? 'scale(1.15)'
+                          : 'scale(1)'
+                      }}
+                    />
+                  ))}
+
+
                     </div>
                   </div>
                   <div>

@@ -148,9 +148,9 @@ export default function InboxView({ inbox, customCategories, onCategorize, onDel
         ) : (
           <div className="space-y-3">
             <AnimatePresence>
-              {inbox.map((item) => (
-                <motion.div
-                  key={item.id}
+              {inbox.map((item, i) => (
+              <motion.div
+                key={item.id ?? `inbox-${i}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{
                     opacity: sortingId === item.id ? 0 : deletingId === item.id ? 0 : 1,
