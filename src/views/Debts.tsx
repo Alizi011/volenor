@@ -263,7 +263,6 @@ export default function Debts({
               const StatusIcon = STATUS_CONFIG[c.status].icon;
               const progress = c.originalAmount > 0 ? Math.round(((c.originalAmount - c.currentAmount) / c.originalAmount) * 100) : 0;
               
-              console.log("Debt case:", c);
               return (
                 <motion.div key={c.id ?? `debt-case-${i}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   className="rounded-xl p-5 cursor-pointer transition-all duration-200" style={{ backgroundColor: 'var(--bg-secondary)' }}
@@ -511,11 +510,11 @@ export default function Debts({
                       </div>
 
                       {/* Communications + Notes merged and sorted */}
-                      {[...selectedCase.communications, ...selectedCase.notes.map((n) => ({ ...n, _isNote: true as const, date: n.createdAt, description: n.content }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((item) => {
+                      {[...selectedCase.communications, ...selectedCase.notes.map((n) => ({ ...n, _isNote: true as const, date: n.createdAt, description: n.content }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((item, index) => {
                         const isNote = '_isNote' in item;
                         if (isNote) {
                           return (
-                            <div key={item.id} className="relative pb-5">
+                            <div key={item.id ?? `note-${index}`} className="relative pb-5">
                               <div className="absolute left-[-18px] w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)', border: '2px solid var(--border-color)' }}>
                                 <MessageSquare size={10} style={{ color: 'var(--text-secondary)' }} />
                               </div>
@@ -529,7 +528,7 @@ export default function Debts({
                         const comm = item as typeof selectedCase.communications[0];
                         const CommIcon = COMM_TYPE_CONFIG[comm.type].icon;
                         return (
-                          <div key={comm.id} className="relative pb-5">
+                          <div key={comm.id ?? `comm-${index}`} className="relative pb-5">
                             <div className="absolute left-[-18px] w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COMM_TYPE_CONFIG[comm.type].color}30`, border: `2px solid ${COMM_TYPE_CONFIG[comm.type].color}` }}>
                               <CommIcon size={10} style={{ color: COMM_TYPE_CONFIG[comm.type].color }} />
                             </div>
