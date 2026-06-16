@@ -419,10 +419,11 @@ export default function Documents({
               </div>
 
               {filteredDocs.map((doc, i) => {
+                console.log("DOC", doc);
                 const cat = getCategoryInfo(doc.category);
                 return (
                   <motion.div
-                    key={doc.id}
+                    key={doc.id ?? `doc-list-${i}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.02 }}
