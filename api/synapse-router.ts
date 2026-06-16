@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, desc, sql} from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
@@ -124,16 +124,15 @@ export const synapseRouter = createRouter({
   }),
 
   tasks: createRouter({
-// Nå kan documents.list i api/synapse-router.ts skrives superrent og typesikkert:
-list: authedQuery.query(async ({ ctx }) => {
-  const householdId = await getHouseholdIdForUser(ctx.user.id);
+    list: authedQuery.query(async ({ ctx }) => {
+      const householdId = await getHouseholdIdForUser(ctx.user.id);
 
-  return await db()
-    .select()
-    .from(documents)
-    .where(eq(documents.householdId, householdId))
-    .orderBy(desc(documents.id)); // Sorterer kjapt etter ID
-}),
+      return db()
+        .select()
+        .from(tasks)
+        .where(eq(tasks.householdId, householdId))
+        .orderBy(desc(tasks.id));
+    }),
 
     create: authedQuery
       .input(
