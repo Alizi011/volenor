@@ -8,13 +8,16 @@ const parseJsonArr = (val: string | null | undefined): string[] => {
 };
 
 // DB returns number IDs but frontend expects string IDs
-const fmtDoc = (d: any) => ({ ...d, id: String(d.id), tags: parseJsonArr(d.tags), size: d.size ?? 0 });
-const fmtTask = (d: any) => ({ ...d, id: String(d.id), tags: parseJsonArr(d.tags), notes: d.notes ?? '' });
-const fmtInbox = (d: any) => ({ ...d, id: String(d.id), size: d.size ?? 0 });
-const fmtFinance = (d: any) => ({ ...d, id: String(d.id), notes: d.notes ?? '', isRecurring: !!d.isRecurring });
-const fmtFamily = (d: any) => ({ ...d, id: String(d.id), notes: d.notes ?? '' });
-const fmtDebt = (d: any) => ({ ...d, id: String(d.id), documentIds: parseJsonArr(d.documentIds), notes: [], communications: [] });
-const fmtCat = (d: any) => ({ ...d, id: String(d.id) });
+const safeId = (id: unknown) =>
+  id === null || id === undefined ? undefined : String(id);
+
+const fmtDoc = (d: any) => ({ ...d, id: safeId(d.id), tags: parseJsonArr(d.tags), size: d.size ?? 0 });
+const fmtTask = (d: any) => ({ ...d, id: safeId(d.id), tags: parseJsonArr(d.tags), notes: d.notes ?? '' });
+const fmtInbox = (d: any) => ({ ...d, id: safeId(d.id), size: d.size ?? 0 });
+const fmtFinance = (d: any) => ({ ...d, id: safeId(d.id), notes: d.notes ?? '', isRecurring: !!d.isRecurring });
+const fmtFamily = (d: any) => ({ ...d, id: safeId(d.id), notes: d.notes ?? '' });
+const fmtDebt = (d: any) => ({ ...d, id: safeId(d.id), documentIds: parseJsonArr(d.documentIds), notes: [], communications: [] });
+const fmtCat = (d: any) => ({ ...d, id: safeId(d.id) });
 
 export function useSynapseDocuments() {
   const utils = trpc.useUtils();
@@ -23,7 +26,7 @@ export function useSynapseDocuments() {
   const del = trpc.synapse.documents.delete.useMutation({ onSuccess: () => utils.synapse.documents.list.invalidate() });
 
   return {
-    documents: (data ?? []).map(fmtDoc),
+    documents: (data ?? []).filter((d: any) => d.id != null).map(fmtDoc),
     isLoading,
     addDocument: useCallback(
   (doc: any) =>
@@ -53,7 +56,7 @@ export function useSynapseTasks() {
   const del = trpc.synapse.tasks.delete.useMutation({ onSuccess: () => utils.synapse.tasks.list.invalidate() });
 
   return {
-    tasks: (data ?? []).map(fmtTask),
+    tasks: (data ?? []).filter((d: any) => d.id != null).map(fmtTask),
     isLoading,
     addTask: useCallback((t: any) => create.mutate(t), [create]),
     updateTask: useCallback((id: string, data: any) => update.mutate({ id: Number(id), data }), [update]),
@@ -68,7 +71,7 @@ export function useSynapseInbox() {
   const del = trpc.synapse.inbox.delete.useMutation({ onSuccess: () => utils.synapse.inbox.list.invalidate() });
 
   return {
-    inbox: (data ?? []).map(fmtInbox),
+    inbox: (data ?? []).filter((d: any) => d.id != null).map(fmtInbox),
     isLoading,
     addInboxItem: useCallback((i: any) => create.mutate(i), [create]),
     removeInboxItem: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
@@ -82,7 +85,7 @@ export function useSynapseFinances() {
   const del = trpc.synapse.finances.delete.useMutation({ onSuccess: () => utils.synapse.finances.list.invalidate() });
 
   return {
-    finances: (data ?? []).map(fmtFinance),
+    finances: (data ?? []).filter((d: any) => d.id != null).map(fmtFinance),
     isLoading,
     addFinance: useCallback((f: any) => create.mutate(f), [create]),
     deleteFinance: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
@@ -95,7 +98,7 @@ export function useSynapseBudgets() {
   const create = trpc.synapse.budgets.create.useMutation({ onSuccess: () => utils.synapse.budgets.list.invalidate() });
 
   return {
-    budgets: (data ?? []).map(fmtCat),
+    budgets: (data ?? []).filter((d: any) => d.id != null).map(fmtCat),
     addBudget: useCallback((b: any) => create.mutate(b), [create]),
   };
 }
@@ -109,7 +112,7 @@ export function useSynapseDebtCases() {
   const del = trpc.synapse.debtCases.delete.useMutation({ onSuccess: () => { utils.synapse.debtCases.list.invalidate(); utils.synapse.debtNotes.list.invalidate(); } });
 
   return {
-    cases: (data ?? []).map(fmtDebt),
+    cases: (data ?? []).filter((d: any) => d.id != null).map(fmtDebt),
     isLoading,
     addCase: useCallback((c: any) => create.mutate({ ...c, memberId: c.memberId ? String(c.memberId) : null }), [create]),
     updateCase: useCallback((id: string, data: any) => update.mutate({ id: Number(id), data }), [update]),
@@ -147,7 +150,7 @@ export function useSynapseFamily() {
   const del = trpc.synapse.family.delete.useMutation({ onSuccess: () => utils.synapse.family.list.invalidate() });
 
   return {
-    members: (data ?? []).map(fmtFamily),
+    members: (data ?? []).filter((d: any) => d.id != null).map(fmtFamily),
     isLoading,
     addMember: useCallback((m: any) => create.mutate(m), [create]),
     deleteMember: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
@@ -161,7 +164,7 @@ export function useSynapseCategories() {
   const del = trpc.synapse.categories.delete.useMutation({ onSuccess: () => utils.synapse.categories.list.invalidate() });
 
   return {
-    customCategories: (data ?? []).map(fmtCat),
+    customCategories: (data ?? []).filter((d: any) => d.id != null).map(fmtCat),
     addCategory: useCallback((c: any) => create.mutate(c), [create]),
     deleteCategory: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
   };

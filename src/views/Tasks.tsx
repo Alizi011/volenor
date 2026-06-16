@@ -255,12 +255,14 @@ export default function Tasks({ tasks, onAddTask, onUpdateTask, onDeleteTask, ad
                 {/* Column content */}
                 <div className="flex-1 p-3 space-y-3 min-h-[400px]">
                   {colTasks.map((task, i) => {
+
+                  const taskKey = task.id ?? `task-${column.status}-${i}`;
                     const cat = TASK_CATEGORIES.find((c) => c.id === task.category);
                     const overdue = isOverdue(task.dueDate);
 
                     return (
                       <motion.div
-                        key={task.id ?? `task-${i}`}
+                        key={taskKey}
                         layout
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -328,9 +330,8 @@ export default function Tasks({ tasks, onAddTask, onUpdateTask, onDeleteTask, ad
                         {/* Tags */}
                         {task.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {task.tags.map((tag) => (
-                              <span
-                                key={tag}
+                            {task.tags.map((tag, tagIndex) => (
+                              <span key={`${tag}-${tagIndex}`}
                                 className="text-xs px-1.5 py-0.5 rounded"
                                 style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                               >
@@ -651,9 +652,9 @@ export default function Tasks({ tasks, onAddTask, onUpdateTask, onDeleteTask, ad
                         Tags
                       </label>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {taskDetail.tags.map((tag) => (
-                          <span
-                            key={tag}
+                        {taskDetail.tags.map((tag, tagIndex) => (
+                          <span key={`${tag}-${tagIndex}`}
+                          
                             className="text-xs px-2 py-0.5 rounded"
                             style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}
                           >
