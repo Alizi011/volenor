@@ -58,7 +58,20 @@ export function useSynapseTasks() {
   return {
     tasks: (data ?? []).filter((d: any) => d.id != null).map(fmtTask),
     isLoading,
-    addTask: useCallback((t: any) => create.mutate(t), [create]),
+    addTask: useCallback(
+  (t: any) =>
+    create.mutate({
+      title: t.title,
+      category: t.category,
+      dueDate: t.dueDate,
+      priority: t.priority,
+      status: t.status ?? 'new',
+      tags: Array.isArray(t.tags) ? JSON.stringify(t.tags) : t.tags ?? '[]',
+      notes: t.notes ?? '',
+      familyMemberId: t.familyMemberId,
+    }),
+  [create],
+),
     updateTask: useCallback((id: string, data: any) => update.mutate({ id: Number(id), data }), [update]),
     deleteTask: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
   };
@@ -87,7 +100,22 @@ export function useSynapseFinances() {
   return {
     finances: (data ?? []).filter((d: any) => d.id != null).map(fmtFinance),
     isLoading,
-    addFinance: useCallback((f: any) => create.mutate(f), [create]),
+    addFinance: useCallback(
+  (f: any) =>
+    create.mutate({
+      title: f.title,
+      amount: Number(f.amount),
+      type: f.type,
+      category: f.category,
+      date: f.date,
+      status: f.status,
+      notes: f.notes ?? '',
+      isRecurring: f.isRecurring ? 1 : 0,
+      recurringInterval: f.recurringInterval,
+      familyMemberId: f.familyMemberId,
+    }),
+  [create],
+),
     deleteFinance: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
   };
 }
@@ -99,7 +127,15 @@ export function useSynapseBudgets() {
 
   return {
     budgets: (data ?? []).filter((d: any) => d.id != null).map(fmtCat),
-    addBudget: useCallback((b: any) => create.mutate(b), [create]),
+    addBudget: useCallback(
+  (b: any) =>
+    create.mutate({
+      category: b.category,
+      monthlyLimit: Number(b.monthlyLimit),
+    }),
+  [create],
+),
+
   };
 }
 
