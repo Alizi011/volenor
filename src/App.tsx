@@ -45,7 +45,7 @@ function MainApp() {
   const { tasks, addTask, updateTask, deleteTask } = useSynapseTasks();
   const { inbox, addInboxItem, removeInboxItem } = useSynapseInbox();
   const { finances, addFinance, deleteFinance } = useSynapseFinances();
-  const { budgets } = useSynapseBudgets();
+  const { budgets, addBudget } = useSynapseBudgets();
   const { cases: debtCases, addCase, updateCase, deleteCase, closeCase } = useSynapseDebtCases();
   const { members, addMember, deleteMember } = useSynapseFamily();
   const { customCategories, addCategory, deleteCategory } = useSynapseCategories();
@@ -194,7 +194,7 @@ function MainApp() {
                 onAddFinance={addFinance}
                 onUpdateFinance={(_id: string, _data: any) => {}}
                 onDeleteFinance={deleteFinance}
-                onAddBudget={(_b: any) => {}}
+               onAddBudget={addBudget}
                 onUpdateBudget={(_id: string, _data: any) => {}}
                 addToast={addToast}
               />

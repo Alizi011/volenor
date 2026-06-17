@@ -150,7 +150,25 @@ export function useSynapseDebtCases() {
   return {
     cases: (data ?? []).filter((d: any) => d.id != null).map(fmtDebt),
     isLoading,
-    addCase: useCallback((c: any) => create.mutate({ ...c, memberId: c.memberId ? String(c.memberId) : null }), [create]),
+    addCase: useCallback(
+  (c: any) =>
+    create.mutate({
+      title: c.title,
+      creditor: c.creditor,
+      originalAmount: Number(c.originalAmount),
+      currentAmount: Number(c.currentAmount),
+      status: c.status ?? 'open',
+      priority: c.priority ?? 'medium',
+      familyMemberId: c.familyMemberId ? Number(c.familyMemberId) : undefined,
+      documentIds: Array.isArray(c.documentIds) ? JSON.stringify(c.documentIds) : c.documentIds ?? '[]',
+      interestRate: c.interestRate !== null && c.interestRate !== undefined && c.interestRate !== ''
+        ? Number(c.interestRate)
+        : null,
+      dueDate: c.dueDate ?? null,
+      referenceNumber: c.referenceNumber ?? '',
+    }),
+  [create],
+),
     updateCase: useCallback((id: string, data: any) => update.mutate({ id: Number(id), data }), [update]),
     deleteCase: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
     closeCase: useCallback((id: string) => close.mutate({ id: Number(id) }), [close]),
@@ -188,7 +206,17 @@ export function useSynapseFamily() {
   return {
     members: (data ?? []).filter((d: any) => d.id != null).map(fmtFamily),
     isLoading,
-    addMember: useCallback((m: any) => create.mutate(m), [create]),
+    addMember: useCallback(
+  (m: any) =>
+    create.mutate({
+      name: m.name,
+      relation: m.relation,
+      color: m.color,
+      notes: m.notes ?? '',
+      dateOfBirth: m.dateOfBirth ?? null,
+    }),
+  [create],
+),
     deleteMember: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
   };
 }
