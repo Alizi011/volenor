@@ -22,7 +22,13 @@ const fmtCat = (d: any) => ({ ...d, id: safeId(d.id) });
 export function useSynapseDocuments() {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.synapse.documents.list.useQuery();
-  const create = trpc.synapse.documents.create.useMutation({ onSuccess: () => utils.synapse.documents.list.invalidate() });
+  const create = trpc.synapse.documents.create.useMutation({
+  onSuccess: async () => {
+    await utils.synapse.documents.list.invalidate();
+      await utils.synapse.documents.list.refetch();
+    },
+  });
+  
   const del = trpc.synapse.documents.delete.useMutation({ onSuccess: () => utils.synapse.documents.list.invalidate() });
 
   return {
