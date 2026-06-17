@@ -63,7 +63,10 @@ export const synapseRouter = createRouter({
           householdId: r.householdId,
           familyMemberId: r.familyMemberId,
           name: r.name || "Uten navn",
-          category: r.category || "Fakturaer",
+         category:
+          !r.category || r.category === "Fakturaer"
+            ? "invoices"
+            : r.category,
           date: r.date || new Date().toISOString().slice(0, 10),
           size: r.size ? Number(r.size) : 0,
           type: r.type || "pdf",

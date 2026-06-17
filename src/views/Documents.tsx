@@ -79,11 +79,11 @@ export default function Documents({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadForm, setUploadForm] = useState({
-    name: '',
-    category: 'Fakturaer',
-    tags: '',
-    notes: ''
-  });
+  name: '',
+  category: CATEGORIES[0]?.id ?? '',
+  tags: '',
+  notes: ''
+});
 
   const filteredDocs = useMemo(() => {
     let filtered = documents;
@@ -183,19 +183,20 @@ export default function Documents({
         addToast('success', 'Dokumentet ble fysisk lagret på serveren!');
         
         // Oppdaterer frontend-listen med en gang
-        onAddDocument({
-          name: uploadForm.name,
-          category: uploadForm.category,
-          type: docType as any,
-          tags: uploadForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-          notes: uploadForm.notes,
-          date: new Date().toISOString().slice(0, 10),
-          size: selectedFile.size,
-        });
+       onAddDocument({
+        name: uploadForm.name,
+        category: uploadForm.category,
+        type: docType as any,
+        tags: uploadForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+        notes: uploadForm.notes,
+        date: new Date().toISOString().slice(0, 10),
+        size: selectedFile.size,
+        fileData: result.filePath ?? result.fileData ?? result.url ?? null,
+      });
 
         // Nullstill skjemaet og lukk modalen
         setSelectedFile(null);
-        setUploadForm({ name: '', category: 'Fakturaer', tags: '', notes: '' });
+        setUploadForm({ name: '', category: CATEGORIES[0]?.id ?? '', tags: '', notes: '' });
         setShowUploadModal(false);
       } else {
         addToast('error', `Feil fra Hono-server: ${result.message}`);
