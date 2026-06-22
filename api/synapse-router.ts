@@ -48,39 +48,37 @@ async function getHouseholdIdForUser(userId: number) {
 export const synapseRouter = createRouter({
   documents: createRouter({
    list: authedQuery.query(async ({ ctx }) => {
-      try {
-        const householdId = await getHouseholdIdForUser(ctx.user.id);
+  try {
+    const householdId = await getHouseholdIdForUser(ctx.user.id);
 
-        // Vi fjerner ORDER BY midlertidig for å være helt sikre på at den ikke krasjer på kolonnenavn
-        const rawRows = await db().execute(
-          sql`SELECT * FROM documents WHERE householdId = ${householdId}`
-        );
-        
-        const documentsList = (rawRows as unknown as any[]) || [];
+    const documentsList = await db()
+      .select()
+      .from(documents)
+      .where(eq(documents.householdId, householdId))
+      .orderBy(desc(documents.id));
 
-        return documentsList.map((r) => ({
-          id: r.id,
-          householdId: r.householdId,
-          familyMemberId: r.familyMemberId,
-          name: r.name || "Uten navn",
-         category:
-          !r.category || r.category === "Fakturaer"
-            ? "invoices"
-            : r.category,
-          date: r.date || new Date().toISOString().slice(0, 10),
-          size: r.size ? Number(r.size) : 0,
-          type: r.type || "pdf",
-          notes: r.notes || "",
-          // Vi sjekker om enten fileData eller filePath eksisterer på objektet fra DB
-          fileData: r.fileData || r.filePath || null,
-          tags: parseJson<string[]>(r.tags, []),
-        })).sort((a, b) => b.id - a.id); // Sorterer etter ID i stedet forcreatedAt for å være helt trygg!
+    return documentsList.map((r) => ({
+      id: r.id,
+      householdId: r.householdId,
+      familyMemberId: r.familyMemberId,
+      name: r.name || "Uten navn",
+      category:
+        !r.category || r.category === "Fakturaer"
+          ? "invoices"
+          : r.category,
+      date: r.date || new Date().toISOString().slice(0, 10),
+      size: r.size ? Number(r.size) : 0,
+      type: r.type || "pdf",
+      notes: r.notes || "",
+      fileData: r.fileData || null,
+      tags: parseJson<string[]>(r.tags, []),
+    }));
 
-      } catch (dbError: any) {
-        console.error("KRITISK FEIL I DOCUMENTS.LIST:", dbError);
-        throw new Error("Databasefeil ved henting av dokumenter: " + dbError.message);
-      }
-    }),
+  } catch (dbError: any) {
+    console.error("KRITISK FEIL I DOCUMENTS.LIST:", dbError);
+    throw new Error("Databasefeil ved henting av dokumenter: " + dbError.message);
+  }
+}),
 
     create: authedQuery
       .input(
