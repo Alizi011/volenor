@@ -2,16 +2,32 @@ import { useCallback } from 'react';
 import { trpc } from '@/providers/trpc';
 
 // Parse JSON fields from DB
-const parseJsonArr = (val: string | null | undefined): string[] => {
+const parseJsonArr = (val: unknown): string[] => {
   if (!val) return [];
-  try { return JSON.parse(val); } catch { return []; }
+  if (Array.isArray(val)) return val;
+  if (typeof val !== 'string') return [];
+
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 };
 
 // DB returns number IDs but frontend expects string IDs
 const safeId = (id: unknown) =>
   id === null || id === undefined ? undefined : String(id);
 
-const fmtDoc = (d: any) => ({ ...d, id: safeId(d.id), tags: parseJsonArr(d.tags), size: d.size ?? 0 });
+const fmtDoc = (d: any) => ({
+  ...d,
+  id: safeId(d.id),
+  category: String(d.category ?? '').trim(),
+  tags: parseJsonArr(d.tags),
+  size: Number(d.size ?? 0),
+  notes: d.notes ?? '',
+});
+
 const fmtTask = (d: any) => ({ ...d, id: safeId(d.id), tags: parseJsonArr(d.tags), notes: d.notes ?? '' });
 const fmtInbox = (d: any) => ({ ...d, id: safeId(d.id), size: d.size ?? 0 });
 const fmtFinance = (d: any) => ({ ...d, id: safeId(d.id), notes: d.notes ?? '', isRecurring: !!d.isRecurring });

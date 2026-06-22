@@ -300,7 +300,7 @@ export default function Documents({
                         if (selectedCategory === cat.id) setSelectedCategory(null);
                         addToast('info', 'Kategori slettet');
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all w-4 shrink-0"
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all"
                       style={{ color: 'var(--text-secondary)' }}
                     >
                       <X size={12} />
