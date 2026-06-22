@@ -763,17 +763,39 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
 
               <div className="flex-1 overflow-y-auto p-6">
                 <div
-                  className="h-80 rounded-xl flex flex-col items-center justify-center mb-6"
-                  style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                >
-                  <FileText size={64} style={{ color: '#f87171', marginBottom: '1rem' }} />
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    PDF-forhåndsvisning
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    (Simulert i demo-versjon)
-                  </p>
-                </div>
+                className="h-80 rounded-xl overflow-hidden mb-6"
+                style={{ backgroundColor: 'var(--bg-tertiary)' }}
+              >
+                {previewDoc.fileData ? (
+                  previewDoc.type === 'pdf' ? (
+                    <iframe
+                      src={previewDoc.fileData}
+                      title={previewDoc.name}
+                      className="w-full h-full"
+                    />
+                  ) : previewDoc.type === 'image' ? (
+                    <img
+                      src={previewDoc.fileData}
+                      alt={previewDoc.name}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center">
+                      <FileText size={64} style={{ color: '#f87171', marginBottom: '1rem' }} />
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        Forhåndsvisning ikke tilgjengelig
+                      </p>
+                    </div>
+                  )
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center">
+                    <FileText size={64} style={{ color: '#f87171', marginBottom: '1rem' }} />
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      Ingen filbane funnet
+                    </p>
+                  </div>
+                )}
+              </div>
 
                 <div className="space-y-4">
                   <div>
