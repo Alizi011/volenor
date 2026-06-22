@@ -113,6 +113,9 @@ export default function Documents({
     return counts;
   }, [documents]);
 
+  console.log("DOCUMENTS I SIDEPANELET:", documents);
+  console.log("CATEGORY COUNTS:", categoryCounts);v
+
   const handleContextMenu = (e: React.MouseEvent, docId: string) => {
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, docId });
