@@ -114,7 +114,7 @@ export default function Documents({
   }, [documents]);
 
   console.log("DOCUMENTS I SIDEPANELET:", documents);
-  console.log("CATEGORY COUNTS:", categoryCounts);v
+  console.log("CATEGORY COUNTS:", categoryCounts);
 
   const handleContextMenu = (e: React.MouseEvent, docId: string) => {
     e.preventDefault();
@@ -235,10 +235,10 @@ export default function Documents({
 
   const getCategoryInfo = (catId: string) => allCategories.find((c) => c.id === catId as any);
 
-  const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string; size?: number }) => {
-    const Icon = builtInIcons[name] || getIcon(name);
-    return <Icon size={size} style={{ color }} />;
-  };
+const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string; size?: number }) => {
+  const ResolvedIcon = builtInIcons[name] || getIcon(name) || FolderOpen;
+  return <ResolvedIcon size={size} style={{ color }} />;
+};
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -887,7 +887,7 @@ export default function Documents({
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Ikon</label>
                     <div className="grid grid-cols-8 gap-2">
                       {AVAILABLE_ICONS.map((iconName) => {
-                        const Icon = getIcon(iconName);
+                       const ResolvedIcon = getIcon(iconName) || FolderOpen;
                         const isSelected = catIcon === iconName;
                         return (
                           <button
@@ -901,7 +901,7 @@ export default function Documents({
                             }}
                             title={iconName}
                           >
-                            <Icon size={16} />
+                            <ResolvedIcon size={16} />
                           </button>
                         );
                       })}
@@ -929,7 +929,10 @@ export default function Documents({
                   <div className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                     <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Forhåndsvisning:</span>
                     <div className="flex items-center gap-2">
-                      {(() => { const Icon = getIcon(catIcon); return <Icon size={18} style={{ color: catColor }} />; })()}
+                      {(() => {
+                      const ResolvedIcon = getIcon(catIcon) || FolderOpen;
+                      return <ResolvedIcon size={18} style={{ color: catColor }} />;
+                    })()}
                       <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
                         {catName || 'Min kategori'}
                       </span>
