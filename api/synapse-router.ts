@@ -7,6 +7,7 @@ import {
   households,
   documents,
   tasks,
+  calendarEvents,
   inboxItems,
   financeEntries,
   budgets,
@@ -175,6 +176,55 @@ export const synapseRouter = createRouter({
       return { success: true };
     }),
   }),
+
+  calendar: createRouter({
+  list: authedQuery.query(async ({ ctx }) => {
+    const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+    return db()
+      .select()
+      .from(calendarEvents)
+      .where(eq(calendarEvents.householdId, householdId))
+      .orderBy(desc(calendarEvents.startDate));
+  }),
+
+  create: authedQuery
+    .input(
+      z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        startDate: z.string(),
+        endDate: z.string().optional(),
+        color: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+      const result = await db()
+        .insert(calendarEvents)
+        .values({
+          householdId,
+          title: input.title,
+          description: input.description ?? "",
+          startDate: new Date(input.startDate),
+          endDate: input.endDate ? new Date(input.endDate) : null,
+          color: input.color ?? "#e8ff47",
+        });
+
+      return { id: Number(result[0].insertId) };
+    }),
+
+  delete: authedQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db()
+        .delete(calendarEvents)
+        .where(eq(calendarEvents.id, input.id));
+
+      return { success: true };
+    }),
+}),
 
   inbox: createRouter({
     list: authedQuery.query(async ({ ctx }) => {

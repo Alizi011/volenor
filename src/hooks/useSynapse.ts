@@ -255,3 +255,50 @@ export function useSynapseCategories() {
     deleteCategory: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
   };
 }
+
+export function useSynapseCalendar() {
+  const utils = trpc.useUtils();
+
+  const { data, isLoading } = trpc.synapse.calendar.list.useQuery();
+
+  const create = trpc.synapse.calendar.create.useMutation({
+    onSuccess: () => utils.synapse.calendar.list.invalidate(),
+  });
+
+  const del = trpc.synapse.calendar.delete.useMutation({
+    onSuccess: () => utils.synapse.calendar.list.invalidate(),
+  });
+
+  return {
+    calendarEvents: (data ?? [])
+      .filter((d: any) => d.id != null)
+      .map((d: any) => ({
+        ...d,
+        id: safeId(d.id),
+        title: d.title ?? '',
+        description: d.description ?? '',
+        startDate: d.startDate,
+        endDate: d.endDate,
+        color: d.color ?? '#e8ff47',
+      })),
+
+    isLoading,
+
+    addCalendarEvent: useCallback(
+      (event: any) =>
+        create.mutate({
+          title: event.title,
+          description: event.description ?? '',
+          startDate: event.startDate,
+          endDate: event.endDate,
+          color: event.color ?? '#e8ff47',
+        }),
+      [create],
+    ),
+
+    deleteCalendarEvent: useCallback(
+      (id: string) => del.mutate({ id: Number(id) }),
+      [del],
+    ),
+  };
+}

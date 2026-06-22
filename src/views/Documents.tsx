@@ -54,7 +54,7 @@ function useAllCategories(customCategories: CustomCategory[]) {
 export default function Documents({
   documents,
   customCategories,
-  onAddDocument,
+  //onAddDocument,
   onDeleteDocument,
   onAddCustomCategory,
   onDeleteCustomCategory,
@@ -186,21 +186,23 @@ export default function Documents({
         addToast('success', 'Dokumentet ble fysisk lagret på serveren!');
         
         // Oppdaterer frontend-listen med en gang
-       onAddDocument({
-        name: uploadForm.name,
-        category: uploadForm.category,
-        type: docType as any,
-        tags: uploadForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-        notes: uploadForm.notes,
-        date: new Date().toISOString().slice(0, 10),
-        size: selectedFile.size,
-        fileData: result.filePath ?? result.fileData ?? result.url ?? null,
-      });
+       //onAddDocument({
+       // name: uploadForm.name,
+       // category: uploadForm.category,
+       // type: docType as any,
+       // tags: uploadForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+       // notes: uploadForm.notes,
+       // date: new Date().toISOString().slice(0, 10),
+        //size: selectedFile.size,
+        //fileData: result.filePath ?? result.fileData ?? result.url ?? null,
+      //});
 
         // Nullstill skjemaet og lukk modalen
         setSelectedFile(null);
         setUploadForm({ name: '', category: CATEGORIES[0]?.id ?? '', tags: '', notes: '' });
         setShowUploadModal(false);
+        
+        window.location.reload();
       } else {
         addToast('error', `Feil fra Hono-server: ${result.message}`);
       }

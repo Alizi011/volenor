@@ -67,7 +67,11 @@ app.post("/api/last_opp", async (c) => {
       VALUES (${householdId}, ${familyMemberId}, ${name}, ${category}, ${dateStr}, ${file.size}, ${type}, ${tags ?? "[]"}, ${notes}, ${relativePath})
     `);
 
-    return c.json({ success: true, message: "Fil lagret fysisk og registrert i MariaDB!" });
+   return c.json({
+  success: true,
+  message: "Fil lagret fysisk og registrert i MariaDB!",
+  filePath: `/${relativePath}`,
+});
 
   } catch (error: any) {
     console.error("Opplastingsfeil på backenden:", error);
