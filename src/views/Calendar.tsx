@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Trash2,
 } from 'lucide-react';
 import {
   startOfMonth,
@@ -240,15 +241,16 @@ return allEvents;
                     onClick={() => setSelectedDate(day)}
                     className="rounded-xl p-2 min-h-[100px] cursor-pointer transition-colors"
                     style={{
-                      backgroundColor: inMonth ? 'var(--bg-secondary)' : 'transparent',
-                      opacity: inMonth ? 1 : 0.4,
-                    }}
+                    backgroundColor: inMonth ? 'var(--bg-tertiary)' : 'transparent',
+                    opacity: inMonth ? 1 : 0.5,
+                    border: inMonth ? '1px solid rgba(0,0,0,0.08)' : 'none',
+                  }}
                     onMouseEnter={(e) => {
                       if (inMonth) e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
                     }}
-                    onMouseLeave={(e) => {
-                      if (inMonth) e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                    }}
+                   onMouseLeave={(e) => {
+                    if (inMonth) e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                  }}
                   >
                     <div className="flex justify-center mb-1">
                       <span
@@ -498,12 +500,29 @@ return allEvents;
                           className="w-2 h-2 rounded-full mt-1.5 shrink-0"
                           style={{ backgroundColor: event.color }}
                         />
-                        <div>
+                       <div className="flex-1">
+                        <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                             {event.title}
                           </p>
-                          <span
-                            className="text-xs px-2 py-0.5 rounded-md mt-1 inline-block"
+
+                          {event.id.startsWith('calendar-') && (
+                            <button
+                              onClick={() => {
+                                const realId = event.id.replace('calendar-', '');
+                                onDeleteCalendarEvent(realId);
+                                addToast('info', 'Hendelse slettet');
+                              }}
+                              className="p-1 rounded-md"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+
+                        <span
+                                                  className="text-xs px-2 py-0.5 rounded-md mt-1 inline-block"
                             style={{
                               backgroundColor: `${event.color}20`,
                               color: event.color,
