@@ -16,6 +16,7 @@ import {
   useSynapseCommunications,
   useSynapseFamily,
   useSynapseCategories,
+  useSynapseCalendar,
 } from './hooks/useSynapse';
 import { CATEGORIES } from './data/demoData';
 import Sidebar from './components/Sidebar';
@@ -49,6 +50,7 @@ function MainApp() {
   const { cases: debtCases, addCase, updateCase, deleteCase, closeCase } = useSynapseDebtCases();
   const { members, addMember, deleteMember } = useSynapseFamily();
   const { customCategories, addCategory, deleteCategory } = useSynapseCategories();
+  const { calendarEvents, addCalendarEvent, deleteCalendarEvent } = useSynapseCalendar();
   const debtNotesHook = useSynapseDebtNotes();
   const commHook = useSynapseCommunications();
 
@@ -185,7 +187,16 @@ function MainApp() {
                 onUpload={handleUploadToInbox}
               />
             )}
-            {currentView === 'calendar' && <CalendarView tasks={tasks} documents={documents} />}
+            {currentView === 'calendar' && (
+            <CalendarView
+              tasks={tasks}
+              documents={documents}
+              calendarEvents={calendarEvents}
+              onAddCalendarEvent={addCalendarEvent}
+              onDeleteCalendarEvent={deleteCalendarEvent}
+              addToast={addToast}
+            />
+          )}
             {currentView === 'finances' && (
               <Finances
                 finances={finances}

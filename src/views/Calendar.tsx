@@ -26,6 +26,10 @@ import Header from '../components/Header';
 interface CalendarViewProps {
   tasks: Task[];
   documents: Document[];
+  calendarEvents: any[];
+  onAddCalendarEvent: (event: any) => void;
+  onDeleteCalendarEvent: (id: string) => void;
+  addToast: (type: any, message: string) => void;
 }
 
 type ViewMode = 'month' | 'week' | 'list';
@@ -40,10 +44,20 @@ interface CalendarEvent {
   color: string;
 }
 
-export default function CalendarView({ tasks, documents }: CalendarViewProps) {
+export default function CalendarView({
+  tasks,
+  documents,
+  calendarEvents,
+  onAddCalendarEvent,
+  onDeleteCalendarEvent,
+  addToast,
+}: CalendarViewProps) {
+  
   const [currentMonth, setCurrentMonth] = useState(new Date(2024, 0, 15));
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventDescription, setNewEventDescription] = useState(''); 
 
   const events = useMemo<CalendarEvent[]>(() => {
     const allEvents: CalendarEvent[] = [];
@@ -74,8 +88,21 @@ export default function CalendarView({ tasks, documents }: CalendarViewProps) {
       }
     });
 
-    return allEvents;
-  }, [tasks, documents]);
+
+    
+  calendarEvents.forEach((event: any) => {
+  allEvents.push({
+    id: `calendar-${event.id}`,
+    title: event.title,
+    date: new Date(event.startDate),
+    type: 'deadline',
+    color: event.color || 'var(--accent-yellow)',
+  });
+});
+
+return allEvents;
+}, [tasks, documents, calendarEvents]);
+
 
   const getEventsForDate = (date: Date) => {
     return events.filter((e) => isSameDay(e.date, date));
@@ -398,6 +425,60 @@ export default function CalendarView({ tasks, documents }: CalendarViewProps) {
               </div>
 
               <div className="p-6">
+
+                <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
+  <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+    Ny hendelse
+  </h4>
+
+  <input
+    type="text"
+    value={newEventTitle}
+    onChange={(e) => setNewEventTitle(e.target.value)}
+    placeholder="Tittel"
+    className="w-full h-10 rounded-lg px-3 text-sm mb-3 outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+
+  <textarea
+    value={newEventDescription}
+    onChange={(e) => setNewEventDescription(e.target.value)}
+    placeholder="Beskrivelse"
+    className="w-full h-20 rounded-lg p-3 text-sm mb-3 outline-none resize-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+
+  <button
+    onClick={() => {
+      if (!newEventTitle.trim()) return;
+
+      onAddCalendarEvent({
+        title: newEventTitle,
+        description: newEventDescription,
+        startDate: selectedDate.toISOString(),
+        endDate: selectedDate.toISOString(),
+        color: '#e8ff47',
+      });
+
+      addToast('success', 'Hendelse opprettet');
+      setNewEventTitle('');
+      setNewEventDescription('');
+    }}
+    className="w-full h-10 rounded-lg text-sm font-medium"
+    style={{ backgroundColor: 'var(--accent-yellow)', color: '#0a0a0a' }}
+  >
+    Lagre hendelse
+  </button>
+</div>
+
                 {getEventsForDate(selectedDate).length === 0 ? (
                   <p className="text-sm text-center py-8" style={{ color: 'var(--text-secondary)' }}>
                     Ingen hendelser denne dagen
