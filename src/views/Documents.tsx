@@ -292,14 +292,15 @@ export default function Documents({
                     {count}
                   </span>
                   {cat.isCustom && (
-                    <button
+                  <button
+                    type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteCustomCategory(cat.id);
                         if (selectedCategory === cat.id) setSelectedCategory(null);
                         addToast('info', 'Kategori slettet');
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all w-4 shrink-0"
                       style={{ color: 'var(--text-secondary)' }}
                     >
                       <X size={12} />
