@@ -22,8 +22,10 @@ import {
   Archive,
   ArrowUpRight,
   ArrowDownLeft,
-  Eye,
+Eye,
+Trash2,
 } from 'lucide-react';
+
 import type { DebtCase, DebtCaseStatus, DebtCasePriority, FamilyMember, Document, CommunicationType } from '../types';
 import { generateId } from '../data/demoData';
 import Header from '../components/Header';
@@ -70,10 +72,9 @@ const COMM_TYPE_CONFIG: Record<CommunicationType, { label: string; icon: React.E
 
 export default function Debts({
   cases, members, documents,
-  onAddCase, onUpdateCase, onDeleteCase: _onDeleteCase, onAddNote, onAddCommunication,
+  onAddCase, onUpdateCase, onDeleteCase, onAddNote, onAddCommunication,
   onLinkDocument, onUnlinkDocument, onCloseCase, addToast,
 }: DebtsProps) {
-  void _onDeleteCase;
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMember, setFilterMember] = useState<string>('all');
   const [showNewCase, setShowNewCase] = useState(false);
@@ -300,12 +301,39 @@ export default function Debts({
                         </div>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{formatNOK(c.currentAmount)}</p>
-                      {c.currentAmount < c.originalAmount && (
-                        <p className="text-xs" style={{ color: 'var(--accent-green)' }}>{formatNOK(c.originalAmount - c.currentAmount)} nedbetalt</p>
-                      )}
-                    </div>
+                    <div className="text-right shrink-0 flex flex-col items-end gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+
+                    if (confirm(`Slette saken "${c.title}"?`)) {
+                      onDeleteCase(c.id);
+                      addToast('success', 'Sak slettet');
+                    }
+                  }}
+                  className="p-1 rounded-lg"
+                  style={{ color: 'var(--accent-red)' }}
+                  title="Slett sak"
+                >
+                  <Trash2 size={16} />
+                </button>
+
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {formatNOK(c.currentAmount)}
+                </p>
+
+                {c.currentAmount < c.originalAmount && (
+                  <p
+                    className="text-xs"
+                    style={{ color: 'var(--accent-green)' }}
+                  >
+                    {formatNOK(c.originalAmount - c.currentAmount)} nedbetalt
+                  </p>
+                )}
+              </div>
                   </div>
 
                   {/* Progress bar */}
