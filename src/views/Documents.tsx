@@ -581,7 +581,7 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
               className="fixed inset-0 z-[120] flex items-center justify-center pointer-events-none"
             >
               <div
-                className="w-full max-w-md rounded-2xl p-6 pointer-events-auto"
+                className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6 pointer-events-auto"
                 style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
               >
                 <div className="flex items-center justify-between mb-4">
