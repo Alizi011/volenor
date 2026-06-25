@@ -131,6 +131,54 @@ if (shouldCreateFinanceEntry) {
   }
 });
 
+
+// --- ENDEPUNKT FOR OPPLASTING AV BANKUTSKRIFT ---
+app.post("/api/last_opp_bank", async (c) => {
+  try {
+    const body = await c.req.parseBody();
+    const file = body["document"] as File | undefined;
+
+    if (!file) {
+      return c.json({ success: false, message: "Ingen bankutskrift mottatt." }, 400);
+    }
+
+    const fileExt = path.extname(file.name);
+    const uniqueName = `bank_${Date.now()}_${Math.round(Math.random() * 1e9)}${fileExt}`;
+    const targetPath = path.join(uploadDir, uniqueName);
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    fs.writeFileSync(targetPath, buffer);
+
+    const relativePath = `opplastede_dokumenter/${uniqueName}`;
+
+    const name = (body["name"] as string) || file.name;
+    const bankName = (body["bankName"] as string) || null;
+    const accountNumber = (body["accountNumber"] as string) || null;
+    const periodStart = (body["periodStart"] as string) || null;
+    const periodEnd = (body["periodEnd"] as string) || null;
+    const householdId = parseInt((body["householdId"] as string) || "1");
+    const familyMemberId = body["familyMemberId"]
+      ? parseInt(body["familyMemberId"] as string)
+      : null;
+
+    await getDb().execute(sql`
+      INSERT INTO bank_statements
+      (householdId, familyMemberId, name, bankName, accountNumber, periodStart, periodEnd, fileData, status)
+      VALUES (${householdId}, ${familyMemberId}, ${name}, ${bankName}, ${accountNumber}, ${periodStart}, ${periodEnd}, ${relativePath}, "uploaded")
+    `);
+
+    return c.json({
+      success: true,
+      message: "Bankutskrift lagret!",
+      filePath: `/${relativePath}`,
+    });
+  } catch (error: any) {
+    console.error("Bankopplastingsfeil:", error);
+    return c.json({ success: false, message: "Serverfeil: " + error.message }, 500);
+  }
+});
+
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
 

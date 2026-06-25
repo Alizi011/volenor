@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   int,
+  decimal,
 } from "drizzle-orm/mysql-core";
 
 const id = () => int("id", { unsigned: true }).autoincrement().primaryKey();
@@ -193,8 +194,78 @@ export const financeEntries = mysqlTable("finance_entries", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+
+
 export type FinanceEntry = typeof financeEntries.$inferSelect;
 export type InsertFinanceEntry = typeof financeEntries.$inferInsert;
+
+// Bank Statements
+export const bankStatements = mysqlTable("bank_statements", {
+  id: id(),
+  householdId: int("householdId", { unsigned: true }).notNull(),
+  familyMemberId: int("familyMemberId", { unsigned: true }),
+  name: varchar("name", { length: 255 }).notNull(),
+  bankName: varchar("bankName", { length: 100 }),
+  accountNumber: varchar("accountNumber", { length: 50 }),
+  periodStart: varchar("periodStart", { length: 10 }),
+  periodEnd: varchar("periodEnd", { length: 10 }),
+  fileData: text("fileData"),
+  status: mysqlEnum("status", [
+    "uploaded",
+    "processing",
+    "processed",
+    "failed",
+  ]).default("uploaded").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Bank Transactions
+export const bankTransactions = mysqlTable("bank_transactions", {
+  id: id(),
+
+  statementId: int("statementId", { unsigned: true }).notNull(),
+
+  householdId: int("householdId", { unsigned: true }).notNull(),
+
+  transactionDate: varchar("transactionDate", { length: 10 }).notNull(),
+
+  description: varchar("description", { length: 255 }).notNull(),
+
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+
+balance: decimal("balance", { precision: 12, scale: 2 }),
+
+
+  direction: mysqlEnum("direction", [
+    "income",
+    "expense",
+  ]).notNull(),
+
+  matchedFinanceEntryId: int("matchedFinanceEntryId", {
+    unsigned: true,
+  }),
+
+  matchedDocumentId: int("matchedDocumentId", {
+    unsigned: true,
+  }),
+
+  matchStatus: mysqlEnum("matchStatus", [
+    "unmatched",
+    "matched",
+    "possible",
+    "ignored",
+  ]).default("unmatched").notNull(),
+
+  aiConfidence: int("aiConfidence", { unsigned: true }),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BankTransaction = typeof bankTransactions.$inferSelect;
+export type InsertBankTransaction = typeof bankTransactions.$inferInsert;
+
+export type BankStatement = typeof bankStatements.$inferSelect;
+export type InsertBankStatement = typeof bankStatements.$inferInsert;
 
 // Budgets
 export const budgets = mysqlTable("budgets", {
