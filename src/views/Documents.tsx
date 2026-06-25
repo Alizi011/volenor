@@ -79,6 +79,7 @@ export default function Documents({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadForm, setUploadForm] = useState({
+    uploadType: 'document',
   name: '',
   category: CATEGORIES[0]?.id ?? '',
   tags: '',
@@ -90,6 +91,10 @@ export default function Documents({
   isPaid: false,
   financialDocumentType: 'none',
   financialCategory: '',
+  bankName: '',
+  accountNumber: '',
+  periodStart: '',
+  periodEnd: '',
 });
 
   const filteredDocs = useMemo(() => {
@@ -180,6 +185,13 @@ export default function Documents({
     formData.append('isPaid', uploadForm.isPaid ? '1' : '0');
     formData.append('financialDocumentType', uploadForm.financialDocumentType);
     formData.append('financialCategory', uploadForm.financialCategory);
+    formData.append('bankName', uploadForm.bankName);
+    formData.append('accountNumber', uploadForm.accountNumber);
+    formData.append('periodStart', uploadForm.periodStart);
+    formData.append('periodEnd', uploadForm.periodEnd);
+    
+
+    
 
     // Finn filtype basert på etternavn
     const ext = selectedFile.name.split('.').pop()?.toLowerCase();
@@ -188,10 +200,15 @@ export default function Documents({
 
     try {
       // Vi bruker nå den rene relative API-stien siden Hono kjører på /api
-      const response = await fetch('/api/last_opp', {
-        method: 'POST',
-        body: formData,
-      });
+      const endpoint =
+  uploadForm.uploadType === 'bank'
+    ? '/api/last_opp_bank'
+    : '/api/last_opp';
+
+const response = await fetch(endpoint, {
+  method: 'POST',
+  body: formData,
+});
 
       const result = await response.json();
 
@@ -213,7 +230,8 @@ export default function Documents({
         // Nullstill skjemaet og lukk modalen
         setSelectedFile(null);
         setUploadForm({
-          name: '',
+  uploadType: 'document',
+  name: '',
           category: CATEGORIES[0]?.id ?? '',
           tags: '',
           notes: '',
@@ -224,6 +242,10 @@ export default function Documents({
           isPaid: false,
           financialDocumentType: 'none',
           financialCategory: '',
+          bankName: '',
+          accountNumber: '',
+          periodStart: '',
+          periodEnd: '',
         });
         setShowUploadModal(false);
         
@@ -594,6 +616,58 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                 </div>
 
                 <div className="space-y-4">
+
+                  <div className="grid grid-cols-2 gap-2">
+  <button
+    type="button"
+    onClick={() =>
+      setUploadForm(prev => ({
+        ...prev,
+        uploadType: 'document',
+      }))
+    }
+    className="h-10 rounded-lg text-sm font-medium"
+    style={{
+      backgroundColor: uploadForm.uploadType === 'document' ? 'var(--accent-yellow)' : 'var(--bg-tertiary)',
+      color: uploadForm.uploadType === 'document' ? '#0a0a0a' : 'var(--text-primary)',
+      border: '1px solid var(--border-color)',
+    }}
+  >
+    Dokument
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      setUploadForm(prev => ({
+        ...prev,
+          uploadType: 'bank',
+          category: '',
+          tags: '',
+          notes: '',
+          isFinancialDocument: false,
+          financeType: 'none',
+          financialDocumentType: 'bank',
+          financialCategory: '',
+          bankName: '',
+          accountNumber: '',
+          periodStart: '',
+          periodEnd: '',
+          amount: '',
+          dueDate: '',
+          isPaid: false,
+      }))
+    }
+    className="h-10 rounded-lg text-sm font-medium"
+    style={{
+      backgroundColor: uploadForm.uploadType === 'bank' ? 'var(--accent-yellow)' : 'var(--bg-tertiary)',
+      color: uploadForm.uploadType === 'bank' ? '#0a0a0a' : 'var(--text-primary)',
+      border: '1px solid var(--border-color)',
+    }}
+  >
+    Bankutskrift
+  </button>
+</div>
                   {/* Det ekte, usynlige inputet */}
                   <input 
                     type="file"
@@ -627,6 +701,72 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                       style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                     />
                   </div>
+
+{uploadForm.uploadType === 'bank' && (
+  <div
+    className="space-y-4 rounded-lg p-3"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)'
+    }}
+  >
+    <div>
+      <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+        Bank
+      </label>
+      <input
+        type="text"
+        value={uploadForm.bankName}
+        onChange={(e) => setUploadForm(prev => ({ ...prev, bankName: e.target.value }))}
+        placeholder="F.eks. Nordea"
+        className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+        style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+      />
+    </div>
+
+    <div>
+      <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+        Kontonummer
+      </label>
+      <input
+        type="text"
+        value={uploadForm.accountNumber}
+        onChange={(e) => setUploadForm(prev => ({ ...prev, accountNumber: e.target.value }))}
+        placeholder="Valgfritt"
+        className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+        style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+      />
+    </div>
+
+    <div className="grid grid-cols-2 gap-3">
+      <div>
+        <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+          Fra dato
+        </label>
+        <input
+          type="date"
+          value={uploadForm.periodStart}
+          onChange={(e) => setUploadForm(prev => ({ ...prev, periodStart: e.target.value }))}
+          className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+          style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+        />
+      </div>
+
+      <div>
+        <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+          Til dato
+        </label>
+        <input
+          type="date"
+          value={uploadForm.periodEnd}
+          onChange={(e) => setUploadForm(prev => ({ ...prev, periodEnd: e.target.value }))}
+          className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+          style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+        />
+      </div>
+    </div>
+  </div>
+)}
 
                   <div>
                     <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Kategori</label>
