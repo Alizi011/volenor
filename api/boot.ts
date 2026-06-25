@@ -85,7 +85,7 @@ if (shouldCreateFinanceEntry) {
     LIMIT 1
   `);
 
-  console.log("FINANCE documentRows:", documentRows);
+  
 
   const rows = Array.isArray(documentRows)
     ? Array.isArray(documentRows[0])
@@ -95,7 +95,7 @@ if (shouldCreateFinanceEntry) {
 
   const documentId = rows[0]?.id;
 
-  console.log("FINANCE documentId:", documentId);
+  
 
   if (documentId) {
     await getDb().execute(sql`
