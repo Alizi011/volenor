@@ -73,6 +73,52 @@ app.post("/api/last_opp", async (c) => {
       VALUES (${householdId}, ${familyMemberId}, ${name}, ${category}, ${dateStr}, ${file.size}, ${type}, ${tags ?? "[]"}, ${notes}, ${relativePath}, ${amount}, ${financeType}, ${dueDate}, ${isPaid}, ${financialDocumentType}, ${financialCategory})
           `);
 
+const shouldCreateFinanceEntry =
+  financeType !== "none" &&
+  amount > 0;
+
+if (shouldCreateFinanceEntry) {
+  const documentRows: any = await getDb().execute(sql`
+    SELECT id FROM documents
+    WHERE fileData = ${relativePath}
+    ORDER BY id DESC
+    LIMIT 1
+  `);
+
+  console.log("FINANCE documentRows:", documentRows);
+
+  const rows = Array.isArray(documentRows)
+    ? Array.isArray(documentRows[0])
+      ? documentRows[0]
+      : documentRows
+    : [];
+
+  const documentId = rows[0]?.id;
+
+  console.log("FINANCE documentId:", documentId);
+
+  if (documentId) {
+    await getDb().execute(sql`
+      INSERT INTO finance_entries
+      (householdId, familyMemberId, documentId, title, amount, type, category, date, status, notes)
+      VALUES (
+        ${householdId},
+        ${familyMemberId},
+        ${documentId},
+        ${name},
+        ${amount},
+        ${financeType},
+        ${financialCategory || category},
+        ${dueDate || dateStr},
+        ${isPaid === 1 ? "paid" : "pending"},
+        ${notes}
+      )
+    `);
+  } else {
+    console.log("FINANCE: fant ikke documentId, økonomipost ble ikke opprettet");
+  }
+}
+
    return c.json({
   success: true,
   message: "Fil lagret fysisk og registrert i MariaDB!",
