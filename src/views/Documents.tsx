@@ -82,7 +82,14 @@ export default function Documents({
   name: '',
   category: CATEGORIES[0]?.id ?? '',
   tags: '',
-  notes: ''
+  notes: '',
+  isFinancialDocument: false,
+  amount: '',
+  financeType: 'none',
+  dueDate: '',
+  isPaid: false,
+  financialDocumentType: 'none',
+  financialCategory: '',
 });
 
   const filteredDocs = useMemo(() => {
@@ -167,6 +174,12 @@ export default function Documents({
     formData.append('category', uploadForm.category);
     formData.append('tags', uploadForm.tags);
     formData.append('notes', uploadForm.notes);
+    formData.append('amount', uploadForm.amount);
+    formData.append('financeType', uploadForm.financeType);
+    formData.append('dueDate', uploadForm.dueDate);
+    formData.append('isPaid', uploadForm.isPaid ? '1' : '0');
+    formData.append('financialDocumentType', uploadForm.financialDocumentType);
+    formData.append('financialCategory', uploadForm.financialCategory);
 
     // Finn filtype basert på etternavn
     const ext = selectedFile.name.split('.').pop()?.toLowerCase();
@@ -199,7 +212,19 @@ export default function Documents({
 
         // Nullstill skjemaet og lukk modalen
         setSelectedFile(null);
-        setUploadForm({ name: '', category: CATEGORIES[0]?.id ?? '', tags: '', notes: '' });
+        setUploadForm({
+          name: '',
+          category: CATEGORIES[0]?.id ?? '',
+          tags: '',
+          notes: '',
+          isFinancialDocument: false,
+          amount: '',
+          financeType: 'none',
+          dueDate: '',
+          isPaid: false,
+          financialDocumentType: 'none',
+          financialCategory: '',
+        });
         setShowUploadModal(false);
         
         window.location.reload();
@@ -639,6 +664,133 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                       style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                     />
                   </div>
+
+                   <div
+                    className="rounded-lg p-3"
+                    style={{
+                      backgroundColor: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-color)'
+                    }}
+                  >
+                    <label
+                      className="flex items-center gap-2 text-sm cursor-pointer"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={uploadForm.isFinancialDocument}
+                        onChange={(e) =>
+                          setUploadForm(prev => ({
+                            ...prev,
+                            isFinancialDocument: e.target.checked,
+                            financeType: e.target.checked ? 'expense' : 'none',
+                            financialDocumentType: e.target.checked ? 'expense' : 'none',
+                          }))
+                        }
+                      />
+                      Dette er et økonomidokument
+                    </label>
+                  </div>
+
+                  {uploadForm.isFinancialDocument && (
+  <div
+    className="space-y-4 rounded-lg p-3"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)'
+    }}
+  >
+        <div>
+          <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+            Beløp
+          </label>
+          <input
+            type="number"
+            value={uploadForm.amount}
+            onChange={(e) => setUploadForm(prev => ({ ...prev, amount: e.target.value }))}
+            placeholder="F.eks. 1250"
+            className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+            Type
+          </label>
+          <select
+            value={uploadForm.financeType}
+            onChange={(e) => setUploadForm(prev => ({ ...prev, financeType: e.target.value }))}
+            className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+          >
+            <option value="expense">Utgift</option>
+            <option value="income">Inntekt</option>
+            <option value="none">Kun dokument</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+            Dokumenttype
+          </label>
+          <select
+            value={uploadForm.financialDocumentType}
+            onChange={(e) => setUploadForm(prev => ({ ...prev, financialDocumentType: e.target.value }))}
+            className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+          >
+            <option value="expense">Utgift</option>
+            <option value="income">Inntekt</option>
+            <option value="debt">Gjeld / inkasso</option>
+            <option value="legal">Juridisk / namsmannen</option>
+            <option value="contract">Avtale</option>
+            <option value="receipt">Kvittering</option>
+            <option value="insurance">Forsikring</option>
+            <option value="tax">Skatt</option>
+            <option value="bank">Bank</option>
+            <option value="other">Annet</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+            Økonomikategori
+          </label>
+          <input
+            type="text"
+            value={uploadForm.financialCategory}
+            onChange={(e) => setUploadForm(prev => ({ ...prev, financialCategory: e.target.value }))}
+            placeholder="F.eks. Strøm, Husleie, Inkasso..."
+            className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+            Forfallsdato
+          </label>
+          <input
+            type="date"
+            value={uploadForm.dueDate}
+            onChange={(e) => setUploadForm(prev => ({ ...prev, dueDate: e.target.value }))}
+            className="w-full h-11 rounded-lg px-3 text-sm outline-none"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+          />
+        </div>
+
+        <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-primary)' }}>
+          <input
+            type="checkbox"
+            checked={uploadForm.isPaid}
+            onChange={(e) => setUploadForm(prev => ({ ...prev, isPaid: e.target.checked }))}
+          />
+          Dokumentet er betalt
+        </label>
+      </div>
+    )}
+
                 </div>
 
                 <div className="flex gap-3 mt-5">

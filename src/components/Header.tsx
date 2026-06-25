@@ -22,7 +22,6 @@ export default function Header({
   inboxCount,
 }: HeaderProps) {
   const [time, setTime] = useState('');
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
@@ -108,7 +107,7 @@ export default function Header({
 
           {showUpload && (
             <button
-              onClick={() => setShowUploadModal(true)}
+              onClick={onUpload}
               className="flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200"
               style={{
                 backgroundColor: 'var(--accent-yellow)',
@@ -139,9 +138,6 @@ export default function Header({
         </div>
       </header>
 
-{showUploadModal && (
-  <UploadModal onClose={() => setShowUploadModal(false)} />
-)}
     </>
   );
 }

@@ -58,14 +58,20 @@ app.post("/api/last_opp", async (c) => {
     const type = (body["type"] as "pdf" | "image" | "doc") || "pdf";
     const householdId = parseInt((body["householdId"] as string) || "1");
     const familyMemberId = body["familyMemberId"] ? parseInt(body["familyMemberId"] as string) : null;
+    const amount = parseInt((body["amount"] as string) || "0");
+    const financeType = (body["financeType"] as string) || "none";
+    const dueDate = (body["dueDate"] as string) || null;
+    const isPaid = body["isPaid"] === "1" ? 1 : 0;
+    const financialDocumentType = (body["financialDocumentType"] as string) || "none";
+    const financialCategory = (body["financialCategory"] as string) || null;
 
     // Her bruker vi getDb().execute(sql`...`) for å tvinge inn fileData feltet.
     // Vi setter tags til "[]" som standard streng i stede for null.
     await getDb().execute(sql`
       INSERT INTO documents 
-      (householdId, familyMemberId, name, category, date, size, type, tags, notes, fileData) 
-      VALUES (${householdId}, ${familyMemberId}, ${name}, ${category}, ${dateStr}, ${file.size}, ${type}, ${tags ?? "[]"}, ${notes}, ${relativePath})
-    `);
+      (householdId, familyMemberId, name, category, date, size, type, tags, notes, fileData, amount, financeType, dueDate, isPaid, financialDocumentType, financialCategory) 
+      VALUES (${householdId}, ${familyMemberId}, ${name}, ${category}, ${dateStr}, ${file.size}, ${type}, ${tags ?? "[]"}, ${notes}, ${relativePath}, ${amount}, ${financeType}, ${dueDate}, ${isPaid}, ${financialDocumentType}, ${financialCategory})
+          `);
 
    return c.json({
   success: true,

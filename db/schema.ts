@@ -99,6 +99,24 @@ export const documents = mysqlTable("documents", {
   tags: text("tags").default("[]").notNull(),
   notes: text("notes"),
   fileData: text("fileData"),
+  amount: int("amount", { unsigned: true }).default(0),
+  financeType: mysqlEnum("financeType", ["expense", "income", "none"]).default("none"),
+  dueDate: varchar("dueDate", { length: 10 }),
+  isPaid: int("isPaid", { unsigned: true }).default(0),
+financialDocumentType: mysqlEnum("financialDocumentType", [
+  "none",
+  "expense",
+  "income",
+  "debt",
+  "legal",
+  "contract",
+  "receipt",
+  "insurance",
+  "tax",
+  "bank",
+  "other",
+]).default("none"),
+financialCategory: varchar("financialCategory", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -162,6 +180,7 @@ export const financeEntries = mysqlTable("finance_entries", {
   id: id(),
   householdId: int("householdId", { unsigned: true }).notNull(), // Endret til int
   familyMemberId: int("familyMemberId", { unsigned: true }),     // Endret til int
+  documentId: int("documentId", { unsigned: true }),
   title: varchar("title", { length: 255 }).notNull(),
   amount: int("amount", { unsigned: true }).notNull(),           // Endret til int
   type: mysqlEnum("type", ["income", "expense"]).default("expense").notNull(),
