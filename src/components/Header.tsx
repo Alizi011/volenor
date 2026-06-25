@@ -5,7 +5,7 @@ import { Search, Upload, X } from 'lucide-react';
 interface HeaderProps {
   title: string;
   onSearch?: (query: string) => void;
-  onUpload?: (formData: FormData) => void; // Endret til FormData for ekte filoverføring
+  onUpload?: () => void;
   searchPlaceholder?: string;
   showSearch?: boolean;
   showUpload?: boolean;
@@ -139,20 +139,19 @@ export default function Header({
         </div>
       </header>
 
-      {showUploadModal && onUpload && (
-        <UploadModal onClose={() => setShowUploadModal(false)} onUpload={onUpload} />
-      )}
+{showUploadModal && (
+  <UploadModal onClose={() => setShowUploadModal(false)} />
+)}
     </>
   );
 }
 
 function UploadModal({
   onClose,
-  onUpload,
 }: {
   onClose: () => void;
-  onUpload: HeaderProps['onUpload'];
 }) {
+
   const [fileName, setFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [category, setCategory] = useState<string>('invoices');
@@ -164,7 +163,7 @@ function UploadModal({
     setFileName(file.name);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!fileName.trim() || !selectedFile) {
       alert("Vennligst velg en fil og fyll ut filnavn.");
       return;
@@ -186,8 +185,25 @@ function UploadModal({
       .join(',');
     formData.append('tags', processedTags);
 
-    onUpload?.(formData);
-    onClose();
+try {
+  const response = await fetch('/api/last_opp', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const result = await response.json();
+
+  if (!result.success) {
+    alert(result.message || 'Opplasting feilet.');
+    return;
+  }
+
+  onClose();
+  window.location.reload();
+} catch (error) {
+  console.error('Feil ved opplasting:', error);
+  alert('Kunne ikke laste opp dokumentet.');
+}
   };
 
   const categories: { value: string; label: string }[] = [
