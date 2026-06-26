@@ -170,36 +170,102 @@ else {
     </div>
   </div>
 )}
-          {analysisResult?.transactionBlocks && (
+          {analysisResult?.aiTransactionsPreview && (
   <div
-    className="mt-4 rounded-xl p-4 max-h-72 overflow-y-auto"
+    className="mt-4 rounded-xl p-4 max-h-96 overflow-y-auto"
     style={{
       backgroundColor: 'var(--bg-secondary)',
       border: '1px solid var(--border-color)',
     }}
   >
-    <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-      Fant {analysisResult.transactionBlocks.length} transaksjonsblokker
+    <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+      AI-tolkede transaksjoner
     </h3>
 
     <div className="space-y-3">
-      {analysisResult.transactionBlocks.map((block: any) => (
-        <div
-          key={block.index}
-          className="rounded-lg p-3"
-          style={{ backgroundColor: 'var(--bg-tertiary)' }}
-        >
-          <p className="text-xs font-medium mb-1" style={{ color: 'var(--accent-yellow)' }}>
-            {block.date}
-          </p>
-          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            {block.rawText}
-          </p>
-        </div>
-      ))}
+        
+      {analysisResult.aiTransactionsPreview.map((tx: any, i: number) => {
+        const isIncome = tx.direction === 'income';
+        const isExpense = tx.direction === 'expense';
+
+        const typeLabel = isIncome
+          ? 'Innbetaling'
+          : isExpense
+            ? 'Utbetaling'
+            : 'Ukjent';
+
+        const title =
+          tx.merchant ||
+          tx.description ||
+          'Ukjent transaksjon';
+
+        const formattedDate = tx.date
+          ? new Date(tx.date).toLocaleDateString('nb-NO', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : 'Ukjent dato';
+
+        const amount = Number(tx.amount ?? 0).toLocaleString('nb-NO', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+
+        const confidence = Math.round((tx.confidence ?? 0) * 100);
+
+        return (
+          <div
+            key={tx.sourceIndex ?? i}
+            className="rounded-lg p-4"
+            style={{ backgroundColor: 'var(--bg-tertiary)' }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                  {title}
+                </p>
+
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {tx.category || 'Ikke kategorisert'} · {typeLabel}
+                </p>
+
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {formattedDate}
+                </p>
+
+                {!tx.merchant && tx.description && (
+                  <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {tx.description}
+                  </p>
+                )}
+
+                {confidence < 75 && (
+                  <p className="text-xs mt-2" style={{ color: 'var(--accent-orange)' }}>
+                    Lav AI-sikkerhet: {confidence} %
+                  </p>
+                )}
+              </div>
+
+              <div className="text-right shrink-0">
+                <p
+                  className="text-base font-bold"
+                  style={{
+                    color: isIncome ? 'var(--accent-green)' : 'var(--text-primary)',
+                  }}
+                >
+                  {isIncome ? '+' : '-'}{amount} kr
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   </div>
 )}
+
+
         </main>
       </div>
     </div>
