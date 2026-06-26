@@ -484,7 +484,7 @@ for (const tx of aiTransactionsPreview) {
 
 await getDb().execute(sql`
   UPDATE bank_statements
-  SET status = "analyzed"
+  SET status = "processed"
   WHERE id = ${statement.id}
 `);
 
@@ -539,6 +539,40 @@ return c.json({
       {
         success: false,
         message: "Serverfeil: " + error.message,
+      },
+      500
+    );
+  }
+});
+
+app.get("/api/bank_transactions/:statementId", async (c) => {
+  try {
+    const statementId = Number(c.req.param("statementId"));
+
+    const result: any = await getDb().execute(sql`
+      SELECT *
+      FROM bank_transactions
+      WHERE statementId = ${statementId}
+      ORDER BY transactionDate DESC, id DESC
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    return c.json({
+      success: true,
+      transactions: rows,
+    });
+  } catch (error: any) {
+    console.error(error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
       },
       500
     );

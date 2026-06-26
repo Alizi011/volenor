@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, FileText, Sparkles } from 'lucide-react';
 
 type BankStatement = {
@@ -25,6 +25,25 @@ export default function BankStatementDetails({
   addToast,
 }: BankStatementDetailsProps) {
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [savedTransactions, setSavedTransactions] = useState<any[]>([]);
+
+const fetchSavedTransactions = async () => {
+  try {
+    const response = await fetch(`/api/bank_transactions/${statement.id}`);
+    const result = await response.json();
+
+    if (result.success) {
+      setSavedTransactions(result.transactions ?? []);
+    }
+  } catch (error) {
+    console.error('Kunne ikke hente lagrede banktransaksjoner:', error);
+  }
+};
+
+useEffect(() => {
+  fetchSavedTransactions();
+}, [statement.id]);
+
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return 'Ikke satt';
 
@@ -82,6 +101,7 @@ export default function BankStatementDetails({
 
     if (result.success) {
   setAnalysisResult(result);
+  await fetchSavedTransactions();
   addToast('success', `Fant ${result.transactionBlocks?.length ?? 0} transaksjonsblokker`);
   console.log(result);
     }
@@ -170,7 +190,7 @@ else {
     </div>
   </div>
 )}
-          {analysisResult?.aiTransactionsPreview && (
+         {(savedTransactions.length > 0 || analysisResult?.aiTransactionsPreview) && (
   <div
     className="mt-4 rounded-xl p-4 max-h-96 overflow-y-auto"
     style={{
@@ -183,8 +203,8 @@ else {
     </h3>
 
     <div className="space-y-3">
-        
-      {analysisResult.aiTransactionsPreview.map((tx: any, i: number) => {
+
+      {(savedTransactions.length > 0 ? savedTransactions : analysisResult.aiTransactionsPreview).map((tx: any, i: number) => {
         const isIncome = tx.direction === 'income';
         const isExpense = tx.direction === 'expense';
 
@@ -199,8 +219,11 @@ else {
           tx.description ||
           'Ukjent transaksjon';
 
-        const formattedDate = tx.date
-          ? new Date(tx.date).toLocaleDateString('nb-NO', {
+       const txDate = tx.transactionDate || tx.date;
+
+const formattedDate = txDate
+  ? new Date(txDate).toLocaleDateString('nb-NO', {
+    
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',
