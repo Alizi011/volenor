@@ -11,6 +11,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { getDocumentProxy, extractText } from "unpdf";
+import OpenAI from "openai";
 
 // --- KORREKTE IMPORTER BASERT PÅ PROSJEKTETS STRUKTUR ---
 // Vi la til 'sql' her
@@ -19,6 +20,9 @@ import * as schema from "@db/schema";
 import { getDb } from "./queries/connection"; 
 
 const app = new Hono<{ Bindings: HttpBindings }>();
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Sørg for at den fysiske opplastingsmappen eksisterer på din VPS
 const uploadDir = path.join(process.cwd(), "opplastede_dokumenter");
@@ -359,6 +363,37 @@ const parsedTransactionsPreview = transactionBlocks
   })
   .filter(Boolean);
 
+  const firstTransaction = parsedTransactionsPreview[0];
+
+let aiPreview = null;
+
+if (firstTransaction) {
+  const aiResponse = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    input: `
+Du er en norsk banktransaksjons-parser.
+
+Tolk denne banktransaksjonen og returner KUN gyldig JSON.
+
+Transaksjon:
+${JSON.stringify(firstTransaction, null, 2)}
+
+Returner format:
+{
+  "date": "YYYY-MM-DD",
+  "amount": number,
+  "direction": "income" | "expense" | "unknown",
+  "description": string,
+  "merchant": string | null,
+  "category": string | null,
+  "confidence": number
+}
+`,
+  });
+
+  aiPreview = JSON.parse(aiResponse.output_text);
+}
+
 console.log("========== BANKANALYSE ==========");
 console.log("statementId:", statement.id);
 console.log("bank:", statement.bankName);
@@ -378,6 +413,7 @@ return c.json({
   textPreview: text.slice(0, 1000),
   transactionBlocks,
   parsedTransactionsPreview,
+  aiPreview,
   statement: {
 
         id: String(statement.id),
