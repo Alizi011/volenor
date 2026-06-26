@@ -391,7 +391,12 @@ Returner format:
 `,
   });
 
-  aiPreview = JSON.parse(aiResponse.output_text);
+  const cleanedAiText = aiResponse.output_text
+  .replace(/```json/g, "")
+  .replace(/```/g, "")
+  .trim();
+
+aiPreview = JSON.parse(cleanedAiText)
 }
 
 console.log("========== BANKANALYSE ==========");
