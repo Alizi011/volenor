@@ -233,6 +233,95 @@ app.get("/api/bank_statements", async (c) => {
   }
 });
 
+// --- ENDEPUNKT FOR Å STARTE ANALYSE AV BANKUTSKRIFT ---
+app.post("/api/analyze_bank_statement", async (c) => {
+  try {
+    const body = await c.req.json();
+    const statementId = body.statementId;
+
+    if (!statementId) {
+      return c.json(
+        {
+          success: false,
+          message: "statementId mangler",
+        },
+        400
+      );
+    }
+
+    const result: any = await getDb().execute(sql`
+      SELECT
+        id,
+        householdId,
+        familyMemberId,
+        name,
+        bankName,
+        accountNumber,
+        periodStart,
+        periodEnd,
+        fileData,
+        status,
+        createdAt
+      FROM bank_statements
+      WHERE id = ${statementId}
+      LIMIT 1
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    if (rows.length === 0) {
+      return c.json(
+        {
+          success: false,
+          message: "Bankutskrift ikke funnet",
+        },
+        404
+      );
+    }
+
+    const statement = rows[0];
+
+    console.log("========== BANKANALYSE ==========");
+    console.log("statementId:", statement.id);
+    console.log("bank:", statement.bankName);
+    console.log("accountNumber:", statement.accountNumber);
+    console.log("fileData:", statement.fileData);
+    console.log("status:", statement.status);
+    console.log("=================================");
+
+    return c.json({
+      success: true,
+      message: "Analyse-endepunkt fungerer",
+      statement: {
+        id: String(statement.id),
+        householdId: statement.householdId,
+        familyMemberId: statement.familyMemberId,
+        name: statement.name,
+        bankName: statement.bankName,
+        accountNumber: statement.accountNumber,
+        periodStart: statement.periodStart,
+        periodEnd: statement.periodEnd,
+        fileData: statement.fileData ? `/${statement.fileData}` : null,
+        status: statement.status,
+        createdAt: statement.createdAt,
+      },
+    });
+  } catch (error: any) {
+    console.error("Feil ved analyse av bankutskrift:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: "Serverfeil: " + error.message,
+      },
+      500
+    );
+  }
+});
 
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
