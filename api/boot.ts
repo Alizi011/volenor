@@ -417,15 +417,16 @@ ${JSON.stringify(firstTransaction, null, 2)}
 });
 
 
-console.log("========== OPENAI RAW ==========");
-console.dir(aiResponse, { depth: null });
-console.log("================================");
+console.log("========== OPENAI OUTPUT_TEXT ==========");
+console.log(aiResponse.output_text);
+console.log("========================================");
+
+console.log("========== OPENAI OUTPUT ==========");
+console.log(JSON.stringify(aiResponse.output, null, 2));
+console.log("===================================");
 
 aiPreview = JSON.parse(aiResponse.output_text);
 
-console.log("========== AI SVAR ==========");
-console.log(aiPreview);
-console.log("=============================");
 }
 
 console.log("========== BANKANALYSE ==========");
