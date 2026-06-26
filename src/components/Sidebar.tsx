@@ -9,6 +9,7 @@ import {
   Inbox,
   Calendar,
   BarChart3,
+  Landmark,
   Gavel,
   Users,
   Moon,
@@ -34,6 +35,7 @@ const navItems: { view: AppView; icon: React.ElementType; label: string }[] = [
   { view: 'inbox', icon: Inbox, label: 'Innboks' },
   { view: 'calendar', icon: Calendar, label: 'Kalender' },
   { view: 'finances', icon: BarChart3, label: 'Finans' },
+  { view: 'bankStatements', icon: Landmark, label: 'Bankutskrifter' },
   { view: 'debts', icon: Gavel, label: 'Gjeld' },
   { view: 'family', icon: Users, label: 'Familie' },
 ];

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Landmark, FileText, Eye } from 'lucide-react';
 import Header from '../components/Header';
@@ -14,15 +14,37 @@ type BankStatement = {
 };
 
 interface BankStatementsProps {
-  bankStatements: BankStatement[];
   addToast: (type: 'success' | 'info' | 'warning' | 'error', message: string) => void;
 }
 
 export default function BankStatements({
-  bankStatements,
   addToast,
 }: BankStatementsProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [bankStatements, setBankStatements] = useState<BankStatement[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBankStatements = async () => {
+      try {
+        const response = await fetch('/api/bank_statements');
+        const result = await response.json();
+
+        if (result.success) {
+          setBankStatements(result.bankStatements ?? []);
+        } else {
+          addToast('error', result.message || 'Kunne ikke hente bankutskrifter');
+        }
+      } catch (error) {
+        console.error('Feil ved henting av bankutskrifter:', error);
+        addToast('error', 'Kunne ikke kontakte serveren');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBankStatements();
+  }, [addToast]);
 
   const filteredStatements = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -79,7 +101,14 @@ export default function BankStatements({
           </div>
         </div>
 
-        {filteredStatements.length === 0 ? (
+        {isLoading ? (
+  <div className="flex flex-col items-center justify-center py-20">
+    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+      Henter bankutskrifter...
+    </p>
+  </div>
+) : filteredStatements.length === 0 ? (
+    
           <div className="flex flex-col items-center justify-center py-20">
             <Landmark size={64} className="mb-4" style={{ color: 'var(--text-secondary)', opacity: 0.3 }} />
             <p className="text-base mb-1" style={{ color: 'var(--text-secondary)' }}>
