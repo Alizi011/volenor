@@ -365,71 +365,88 @@ const parsedTransactionsPreview = transactionBlocks
   })
   .filter(Boolean);
 
-  const firstTransaction = parsedTransactionsPreview[0];
+const transactionsForAi = parsedTransactionsPreview.slice(0, 50);
 
 let aiPreview = null;
+let aiTransactionsPreview: any[] = [];
 
-if (firstTransaction) {
-const aiResponse = await openai.responses.create({
-  model: "gpt-4.1-mini",
-  input: `
+if (transactionsForAi.length > 0) {
+  const aiResponse = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    input: `
 Du er en norsk banktransaksjons-parser.
 
-Tolk denne banktransaksjonen.
+Tolk disse banktransaksjonene.
 
-Transaksjon:
-${JSON.stringify(firstTransaction, null, 2)}
+Regler:
+- Behold sourceIndex fra input.
+- direction skal være "income", "expense" eller "unknown".
+- Bruk norsk kategori hvis mulig.
+- merchant er butikk/motpart hvis mulig, ellers null.
+- confidence er mellom 0 og 1.
+
+Transaksjoner:
+${JSON.stringify(transactionsForAi, null, 2)}
 `,
-  text: {
-    format: {
-      type: "json_schema",
-      name: "bank_transaction",
-      strict: true,
-      schema: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          date: { type: "string" },
-          amount: { type: "number" },
-          direction: {
-            type: "string",
-            enum: ["income", "expense", "unknown"],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "bank_transactions_batch",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            transactions: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  sourceIndex: { type: "number" },
+                  date: { type: "string" },
+                  amount: { type: "number" },
+                  direction: {
+                    type: "string",
+                    enum: ["income", "expense", "unknown"],
+                  },
+                  description: { type: "string" },
+                  merchant: {
+                    type: ["string", "null"],
+                  },
+                  category: {
+                    type: ["string", "null"],
+                  },
+                  confidence: { type: "number" },
+                },
+                required: [
+                  "sourceIndex",
+                  "date",
+                  "amount",
+                  "direction",
+                  "description",
+                  "merchant",
+                  "category",
+                  "confidence",
+                ],
+              },
+            },
           },
-          description: { type: "string" },
-          merchant: {
-            type: ["string", "null"],
-          },
-          category: {
-            type: ["string", "null"],
-          },
-          confidence: { type: "number" },
+          required: ["transactions"],
         },
-        required: [
-          "date",
-          "amount",
-          "direction",
-          "description",
-          "merchant",
-          "category",
-          "confidence",
-        ],
       },
     },
-  },
-});
+  });
 
+  const aiParsed = JSON.parse(aiResponse.output_text);
+  aiTransactionsPreview = aiParsed.transactions ?? [];
+  aiPreview = aiTransactionsPreview[0] ?? null;
 
-console.log("========== OPENAI OUTPUT_TEXT ==========");
-console.log(aiResponse.output_text);
-console.log("========================================");
-
-console.log("========== OPENAI OUTPUT ==========");
-console.log(JSON.stringify(aiResponse.output, null, 2));
-console.log("===================================");
-
-aiPreview = JSON.parse(aiResponse.output_text);
-
+  console.log("========== AI TRANSAKSJONER ==========");
+  console.log(aiTransactionsPreview.slice(0, 10));
+  console.log("======================================");
 }
+
 
 console.log("========== BANKANALYSE ==========");
 
@@ -453,6 +470,7 @@ return c.json({
   transactionBlocks,
   parsedTransactionsPreview,
   aiPreview,
+  aiTransactionsPreview,
   statement: {
 
         id: String(statement.id),
