@@ -179,6 +179,61 @@ app.post("/api/last_opp_bank", async (c) => {
   }
 });
 
+// --- ENDEPUNKT FOR Å HENTE BANKUTSKRIFTER ---
+app.get("/api/bank_statements", async (c) => {
+  try {
+    const result: any = await getDb().execute(sql`
+      SELECT
+        id,
+        householdId,
+        familyMemberId,
+        name,
+        bankName,
+        accountNumber,
+        periodStart,
+        periodEnd,
+        fileData,
+        status,
+        createdAt
+      FROM bank_statements
+      ORDER BY createdAt DESC
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    return c.json({
+      success: true,
+      bankStatements: rows.map((row: any) => ({
+        id: String(row.id),
+        householdId: row.householdId,
+        familyMemberId: row.familyMemberId,
+        name: row.name,
+        bankName: row.bankName,
+        accountNumber: row.accountNumber,
+        periodStart: row.periodStart,
+        periodEnd: row.periodEnd,
+        fileData: row.fileData ? `/${row.fileData}` : null,
+        status: row.status,
+        createdAt: row.createdAt,
+      })),
+    });
+  } catch (error: any) {
+    console.error("Feil ved henting av bankutskrifter:", error);
+    return c.json(
+      {
+        success: false,
+        message: "Serverfeil: " + error.message,
+      },
+      500
+    );
+  }
+});
+
+
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
 
