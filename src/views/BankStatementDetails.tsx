@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowLeft, FileText, Sparkles } from 'lucide-react';
 
 type BankStatement = {
@@ -23,6 +24,7 @@ export default function BankStatementDetails({
   onBack,
   addToast,
 }: BankStatementDetailsProps) {
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return 'Ikke satt';
 
@@ -79,9 +81,11 @@ export default function BankStatementDetails({
     const result = await response.json();
 
     if (result.success) {
-      addToast('success', 'Analyse startet');
-      console.log(result.statement);
-    } else {
+  setAnalysisResult(result);
+  addToast('success', `Fant ${result.transactionBlocks?.length ?? 0} transaksjonsblokker`);
+  console.log(result);
+    }
+else {
       addToast('error', result.message || 'Analyse mislyktes');
     }
   } catch (error) {
@@ -138,6 +142,36 @@ export default function BankStatementDetails({
               </div>
             )}
           </div>
+          {analysisResult?.transactionBlocks && (
+  <div
+    className="mt-4 rounded-xl p-4 max-h-72 overflow-y-auto"
+    style={{
+      backgroundColor: 'var(--bg-secondary)',
+      border: '1px solid var(--border-color)',
+    }}
+  >
+    <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+      Fant {analysisResult.transactionBlocks.length} transaksjonsblokker
+    </h3>
+
+    <div className="space-y-3">
+      {analysisResult.transactionBlocks.map((block: any) => (
+        <div
+          key={block.index}
+          className="rounded-lg p-3"
+          style={{ backgroundColor: 'var(--bg-tertiary)' }}
+        >
+          <p className="text-xs font-medium mb-1" style={{ color: 'var(--accent-yellow)' }}>
+            {block.date}
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            {block.rawText}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
         </main>
       </div>
     </div>
