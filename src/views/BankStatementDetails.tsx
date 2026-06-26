@@ -223,7 +223,7 @@ else {
 
 const formattedDate = txDate
   ? new Date(txDate).toLocaleDateString('nb-NO', {
-    
+
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',
@@ -235,7 +235,10 @@ const formattedDate = txDate
           maximumFractionDigits: 2,
         });
 
-        const confidence = Math.round((tx.confidence ?? 0) * 100);
+        const confidence =
+  tx.aiConfidence !== undefined && tx.aiConfidence !== null
+    ? Number(tx.aiConfidence)
+    : Math.round((tx.confidence ?? 0) * 100);
 
         return (
           <div
