@@ -10,6 +10,7 @@ import { env } from "./lib/env";
 import { serveStatic } from "@hono/node-server/serve-static";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { getDocumentProxy, extractText } from "unpdf";
 
 // --- KORREKTE IMPORTER BASERT PÅ PROSJEKTETS STRUKTUR ---
 // Vi la til 'sql' her
@@ -285,18 +286,38 @@ app.post("/api/analyze_bank_statement", async (c) => {
 
     const statement = rows[0];
 
-    console.log("========== BANKANALYSE ==========");
-    console.log("statementId:", statement.id);
-    console.log("bank:", statement.bankName);
-    console.log("accountNumber:", statement.accountNumber);
-    console.log("fileData:", statement.fileData);
-    console.log("status:", statement.status);
-    console.log("=================================");
+const pdfPath = path.join(process.cwd(), statement.fileData);
+
+if (!fs.existsSync(pdfPath)) {
+  return c.json(
+    {
+      success: false,
+      message: "PDF-filen ble ikke funnet.",
+    },
+    404
+  );
+}
+
+const pdfBuffer = fs.readFileSync(pdfPath);
+const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
+const { totalPages, text } = await extractText(pdf, { mergePages: true });
+
+console.log("========== BANKANALYSE ==========");
+console.log("statementId:", statement.id);
+console.log("bank:", statement.bankName);
+console.log("fileData:", statement.fileData);
+console.log("PDF:", pdfPath);
+console.log("Sider:", totalPages);
+console.log("Tekstutdrag:", text.slice(0, 1000));
+console.log("=================================");
 
     return c.json({
-      success: true,
-      message: "Analyse-endepunkt fungerer",
-      statement: {
+  success: true,
+  message: "PDF ble lest",
+  totalPages,
+  textPreview: text.slice(0, 1000),
+  statement: {
+    
         id: String(statement.id),
         householdId: statement.householdId,
         familyMemberId: statement.familyMemberId,
