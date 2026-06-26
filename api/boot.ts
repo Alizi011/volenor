@@ -306,7 +306,7 @@ const transactionDateRegex = /\b\d{4}-\d{2}-\d{2}\b/g;
 
 const dateMatches = [...text.matchAll(transactionDateRegex)];
 
-const transactionBlocks = dateMatches.slice(0, 20).map((match, index) => {
+const transactionBlocks = dateMatches.map((match, index) => {
   const start = match.index ?? 0;
   const nextStart = dateMatches[index + 1]?.index ?? text.length;
 
@@ -322,6 +322,24 @@ const transactionBlocks = dateMatches.slice(0, 20).map((match, index) => {
   };
 });
 
+const parsedTransactionsPreview = transactionBlocks.map((block) => {
+  const amountMatch = block.rawText.match(/\b\d{1,3}(?:\s?\d{3})*,\d{2}\b/);
+  const amountText = amountMatch?.[0] ?? null;
+
+  const description = block.rawText
+    .replace(block.date, "")
+    .replace(amountText ?? "", "")
+    .trim();
+
+  return {
+    index: block.index,
+    date: block.date,
+    description,
+    amountText,
+    rawText: block.rawText,
+  };
+});
+
 console.log("========== BANKANALYSE ==========");
 console.log("statementId:", statement.id);
 console.log("bank:", statement.bankName);
@@ -331,6 +349,7 @@ console.log("Sider:", totalPages);
 console.log("Tekstutdrag:", text.slice(0, 1000));
 console.log("Transaksjonsblokker funnet:", transactionBlocks.length);
 console.log("Transaksjonsblokker:", transactionBlocks.slice(0, 5));
+console.log("Tolket preview:", parsedTransactionsPreview.slice(0, 5));
 console.log("=================================");
 
 return c.json({
@@ -339,6 +358,7 @@ return c.json({
   totalPages,
   textPreview: text.slice(0, 1000),
   transactionBlocks,
+  parsedTransactionsPreview,
   statement: {
 
         id: String(statement.id),
