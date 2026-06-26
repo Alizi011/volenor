@@ -323,23 +323,41 @@ const transactionBlocks = dateMatches.map((match, index) => {
   };
 });
 
-const parsedTransactionsPreview = transactionBlocks.map((block) => {
-  const amountMatch = block.rawText.match(/\b\d{1,3}(?:\s?\d{3})*,\d{2}\b/);
-  const amountText = amountMatch?.[0] ?? null;
+const parsedTransactionsPreview = transactionBlocks
+  .map((block) => {
+    const amountMatches = [
+      ...block.rawText.matchAll(/\b\d{1,3}(?:\s?\d{3})*,\d{2}\b/g),
+    ];
 
-  const description = block.rawText
-    .replace(block.date, "")
-    .replace(amountText ?? "", "")
-    .trim();
+    const amountText = amountMatches[0]?.[0] ?? null;
 
-  return {
-    index: block.index,
-    date: block.date,
-    description,
-    amountText,
-    rawText: block.rawText,
-  };
-});
+    if (!amountText) {
+      return null;
+    }
+
+    const amount = Number(
+      amountText
+        .replace(/\s/g, "")
+        .replace(",", ".")
+    );
+
+    const description = block.rawText
+      .replace(block.date, "")
+      .replace(amountText, "")
+      .replace(/\b\d{4}\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return {
+      index: block.index,
+      date: block.date,
+      description,
+      amountText,
+      amount,
+      rawText: block.rawText,
+    };
+  })
+  .filter(Boolean);
 
 console.log("========== BANKANALYSE ==========");
 console.log("statementId:", statement.id);
