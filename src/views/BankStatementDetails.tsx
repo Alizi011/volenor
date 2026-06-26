@@ -27,6 +27,16 @@ export default function BankStatementDetails({
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const [savedTransactions, setSavedTransactions] = useState<any[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
+
+  const [editTransaction, setEditTransaction] = useState({
+  merchant: '',
+  category: '',
+  description: '',
+  direction: 'expense',
+  matchStatus: 'unmatched',
+});
+
+const [savingTransaction, setSavingTransaction] = useState(false);
   
 
 const fetchSavedTransactions = async () => {
@@ -55,6 +65,37 @@ useEffect(() => {
       year: 'numeric',
     });
   };
+
+const saveTransactionChanges = async () => {
+  if (!selectedTransaction) return;
+
+  setSavingTransaction(true);
+
+  try {
+    const response = await fetch(`/api/bank_transactions/${selectedTransaction.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editTransaction),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      await fetchSavedTransactions();
+      addToast('success', 'Transaksjon oppdatert');
+      setSelectedTransaction(null);
+    } else {
+      addToast('error', result.message || 'Kunne ikke lagre transaksjonen');
+    }
+  } catch (error) {
+    console.error(error);
+    addToast('error', 'Kunne ikke kontakte serveren');
+  } finally {
+    setSavingTransaction(false);
+  }
+};
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -99,6 +140,8 @@ useEffect(() => {
       }),
     });
 
+
+    
     const result = await response.json();
 
     if (result.success) {
@@ -245,7 +288,17 @@ const formattedDate = txDate
         return (
           <div
             key={tx.sourceIndex ?? i}
-            onClick={() => setSelectedTransaction(tx)}
+onClick={() => {
+  setSelectedTransaction(tx);
+
+  setEditTransaction({
+    merchant: tx.merchant ?? '',
+    category: tx.category ?? '',
+    description: tx.description ?? '',
+    direction: tx.direction ?? 'expense',
+    matchStatus: tx.matchStatus ?? 'unmatched',
+  });
+}}
             className="rounded-lg p-4 cursor-pointer transition-all hover:opacity-90"
             style={{ backgroundColor: 'var(--bg-tertiary)' }}
           >
@@ -312,10 +365,11 @@ const formattedDate = txDate
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-            {selectedTransaction.merchant || selectedTransaction.description || 'Transaksjon'}
+            Rediger transaksjon
           </h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            {selectedTransaction.category || 'Ikke kategorisert'}
+            {selectedTransaction.transactionDate || selectedTransaction.date || 'Ukjent dato'} ·{' '}
+            {selectedTransaction.amount ?? 'Ukjent'} kr
           </p>
         </div>
 
@@ -332,29 +386,131 @@ const formattedDate = txDate
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <Info label="Dato" value={selectedTransaction.transactionDate || selectedTransaction.date || 'Ukjent'} />
-        <Info label="Beløp" value={`${selectedTransaction.amount ?? 'Ukjent'} kr`} />
-        <Info label="Type" value={selectedTransaction.direction === 'income' ? 'Innbetaling' : 'Utbetaling'} />
-        <Info label="AI-sikkerhet" value={`${selectedTransaction.aiConfidence ?? Math.round((selectedTransaction.confidence ?? 0) * 100)} %`} />
-        <Info label="Motpart" value={selectedTransaction.merchant || 'Ikke funnet'} />
-        <Info label="Kategori" value={selectedTransaction.category || 'Ikke satt'} />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Motpart
+          </label>
+          <input
+            type="text"
+            value={editTransaction.merchant}
+            onChange={(e) =>
+              setEditTransaction((prev) => ({
+                ...prev,
+                merchant: e.target.value,
+              }))
+            }
+            className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+            }}
+          />
+        </div>
+
+        <div>
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Kategori
+          </label>
+          <input
+            type="text"
+            value={editTransaction.category}
+            onChange={(e) =>
+              setEditTransaction((prev) => ({
+                ...prev,
+                category: e.target.value,
+              }))
+            }
+            className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+            }}
+          />
+        </div>
+
+        <div>
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Type
+          </label>
+          <select
+            value={editTransaction.direction}
+            onChange={(e) =>
+              setEditTransaction((prev) => ({
+                ...prev,
+                direction: e.target.value,
+              }))
+            }
+            className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <option value="expense">Utbetaling</option>
+            <option value="income">Innbetaling</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Matchstatus
+          </label>
+          <select
+            value={editTransaction.matchStatus}
+            onChange={(e) =>
+              setEditTransaction((prev) => ({
+                ...prev,
+                matchStatus: e.target.value,
+              }))
+            }
+            className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <option value="unmatched">Ikke matchet</option>
+            <option value="possible">Mulig match</option>
+            <option value="matched">Matchet</option>
+            <option value="ignored">Ignorert</option>
+          </select>
+        </div>
       </div>
 
       <div className="mt-5">
-        <Info label="Beskrivelse" value={selectedTransaction.description || 'Ingen beskrivelse'} />
+        <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+          Beskrivelse
+        </label>
+        <textarea
+          value={editTransaction.description}
+          onChange={(e) =>
+            setEditTransaction((prev) => ({
+              ...prev,
+              description: e.target.value,
+            }))
+          }
+          rows={3}
+          className="mt-2 w-full rounded-lg px-3 py-3 text-sm outline-none resize-none"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
+        />
       </div>
 
       <div className="mt-5">
-        <label
-          className="text-xs uppercase tracking-wider font-medium"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
           Original tekst fra bankutskrift
         </label>
 
         <pre
-          className="mt-2 rounded-lg p-3 text-xs whitespace-pre-wrap max-h-48 overflow-y-auto"
+          className="mt-2 rounded-lg p-3 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto"
           style={{
             backgroundColor: 'var(--bg-tertiary)',
             color: 'var(--text-secondary)',
@@ -362,6 +518,33 @@ const formattedDate = txDate
         >
           {selectedTransaction.rawText || 'Ingen originaltekst lagret'}
         </pre>
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          type="button"
+          onClick={() => setSelectedTransaction(null)}
+          className="h-10 px-4 rounded-lg text-sm"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          Avbryt
+        </button>
+
+        <button
+          type="button"
+          onClick={saveTransactionChanges}
+          disabled={savingTransaction}
+          className="h-10 px-5 rounded-lg text-sm font-medium disabled:opacity-50"
+          style={{
+            backgroundColor: 'var(--accent-yellow)',
+            color: '#0a0a0a',
+          }}
+        >
+          {savingTransaction ? 'Lagrer...' : 'Lagre endringer'}
+        </button>
       </div>
     </div>
   </div>

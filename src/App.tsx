@@ -161,6 +161,7 @@ function MainApp() {
                   addDocument(doc);
                   addToast('success', 'Dokument lagt til');
                 }}
+                
                 onDeleteDocument={deleteDocument}
                 onAddCustomCategory={addCategory}
                 onDeleteCustomCategory={deleteCategory}
@@ -211,7 +212,7 @@ function MainApp() {
                 addToast={addToast}
               />
             )}
-            
+
             {currentView === 'bankStatements' && (
   <BankStatements addToast={addToast} />
 )}

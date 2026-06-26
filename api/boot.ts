@@ -579,6 +579,40 @@ app.get("/api/bank_transactions/:statementId", async (c) => {
   }
 });
 
+app.put("/api/bank_transactions/:id", async (c) => {
+  try {
+    const id = Number(c.req.param("id"));
+    const body = await c.req.json();
+
+    await getDb().execute(sql`
+      UPDATE bank_transactions
+      SET
+        merchant = ${body.merchant},
+        category = ${body.category},
+        description = ${body.description},
+        direction = ${body.direction},
+        matchStatus = ${body.matchStatus}
+      WHERE id = ${id}
+    `);
+
+    return c.json({
+      success: true,
+      message: "Banktransaksjon oppdatert",
+    });
+
+  } catch (error: any) {
+    console.error(error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
 
