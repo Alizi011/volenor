@@ -122,9 +122,9 @@ else {
           </div>
         </aside>
 
-        <main className="p-6 overflow-hidden">
+        <main className="p-6 overflow-y-auto">
           <div
-            className="h-full rounded-xl overflow-hidden flex items-center justify-center"
+            className="h-[65vh] rounded-xl overflow-hidden flex items-center justify-center"
             style={{ backgroundColor: 'var(--bg-tertiary)' }}
           >
             {statement.fileData ? (
