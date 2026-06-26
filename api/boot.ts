@@ -417,6 +417,9 @@ ${JSON.stringify(firstTransaction, null, 2)}
 });
 
 aiPreview = JSON.parse(aiResponse.output_text);
+console.log("========== AI SVAR ==========");
+console.log(aiPreview);
+console.log("=============================");
 }
 
 console.log("========== BANKANALYSE ==========");
