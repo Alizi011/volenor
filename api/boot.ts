@@ -442,6 +442,52 @@ ${JSON.stringify(transactionsForAi, null, 2)}
   aiTransactionsPreview = aiParsed.transactions ?? [];
   aiPreview = aiTransactionsPreview[0] ?? null;
 
+  await getDb().execute(sql`
+  DELETE FROM bank_transactions
+  WHERE statementId = ${statement.id}
+`);
+
+for (const tx of aiTransactionsPreview) {
+  await getDb().execute(sql`
+    INSERT INTO bank_transactions
+    (
+      statementId,
+      householdId,
+      transactionDate,
+      description,
+      amount,
+      balance,
+      direction,
+      matchStatus,
+      aiConfidence,
+      merchant,
+      category,
+      rawText
+    )
+    VALUES
+    (
+      ${statement.id},
+      ${statement.householdId},
+      ${tx.date},
+      ${tx.description},
+      ${tx.amount},
+      ${null},
+      ${tx.direction === "income" ? "income" : "expense"},
+      ${"unmatched"},
+      ${Math.round((tx.confidence ?? 0) * 100)},
+      ${tx.merchant ?? null},
+      ${tx.category ?? null},
+      ${parsedTransactionsPreview.find((p: any) => p.index === tx.sourceIndex)?.rawText ?? null}
+    )
+  `);
+}
+
+await getDb().execute(sql`
+  UPDATE bank_statements
+  SET status = "analyzed"
+  WHERE id = ${statement.id}
+`);
+
   console.log("========== AI TRANSAKSJONER ==========");
   console.log(aiTransactionsPreview.slice(0, 10));
   console.log("======================================");
