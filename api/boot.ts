@@ -306,23 +306,19 @@ const transactionDateRegex = /\b\d{4}-\d{2}-\d{2}\b/g;
 
 const dateMatches = [...text.matchAll(transactionDateRegex)];
 
-const transactionsPreview = dateMatches.slice(0, 20).map((match, index) => {
+const transactionBlocks = dateMatches.slice(0, 20).map((match, index) => {
   const start = match.index ?? 0;
   const nextStart = dateMatches[index + 1]?.index ?? text.length;
 
-  const chunk = text.slice(start, nextStart).replace(/\s+/g, " ").trim();
-
-  const amountMatches = [...chunk.matchAll(/\b\d{1,3}(?:\s?\d{3})*,\d{2}\b/g)];
-  const amountText = amountMatches[amountMatches.length - 1]?.[0] ?? null;
-
-  const amount = amountText
-    ? Number(amountText.replace(/\s/g, "").replace(",", "."))
-    : null;
+  const rawText = text
+    .slice(start, nextStart)
+    .replace(/\s+/g, " ")
+    .trim();
 
   return {
+    index,
     date: match[0],
-    rawText: chunk,
-    amount,
+    rawText,
   };
 });
 
@@ -333,16 +329,16 @@ console.log("fileData:", statement.fileData);
 console.log("PDF:", pdfPath);
 console.log("Sider:", totalPages);
 console.log("Tekstutdrag:", text.slice(0, 1000));
-console.log("Transaksjoner funnet:", transactionsPreview.length);
-console.log("Transaksjonsutdrag:", transactionsPreview.slice(0, 5));
+console.log("Transaksjonsblokker funnet:", transactionBlocks.length);
+console.log("Transaksjonsblokker:", transactionBlocks.slice(0, 5));
 console.log("=================================");
 
-    return c.json({
+return c.json({
   success: true,
   message: "PDF ble lest",
   totalPages,
   textPreview: text.slice(0, 1000),
-  transactionsPreview,
+  transactionBlocks,
   statement: {
 
         id: String(statement.id),
