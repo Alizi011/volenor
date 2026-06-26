@@ -584,14 +584,31 @@ app.put("/api/bank_transactions/:id", async (c) => {
     const id = Number(c.req.param("id"));
     const body = await c.req.json();
 
+    const amount =
+      body.amount === undefined || body.amount === null || body.amount === ""
+        ? null
+        : Number(String(body.amount).replace(",", "."));
+
+    if (!Number.isFinite(amount)) {
+      return c.json(
+        {
+          success: false,
+          message: "Beløp er ugyldig",
+        },
+        400
+      );
+    }
+
     await getDb().execute(sql`
       UPDATE bank_transactions
       SET
-        merchant = ${body.merchant},
-        category = ${body.category},
-        description = ${body.description},
-        direction = ${body.direction},
-        matchStatus = ${body.matchStatus}
+        merchant = ${body.merchant ?? null},
+        category = ${body.category ?? null},
+        description = ${body.description ?? ""},
+        direction = ${body.direction ?? "expense"},
+        matchStatus = ${body.matchStatus ?? "unmatched"},
+        amount = ${amount}
+        note = ${body.note ?? null}
       WHERE id = ${id}
     `);
 

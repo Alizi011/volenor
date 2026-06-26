@@ -34,6 +34,8 @@ export default function BankStatementDetails({
   description: '',
   direction: 'expense',
   matchStatus: 'unmatched',
+  amount: '',
+  note: '',
 });
 
 const [savingTransaction, setSavingTransaction] = useState(false);
@@ -297,6 +299,8 @@ onClick={() => {
     description: tx.description ?? '',
     direction: tx.direction ?? 'expense',
     matchStatus: tx.matchStatus ?? 'unmatched',
+    amount: String(tx.amount ?? ''),
+    note: tx.note ?? '',
   });
 }}
             className="rounded-lg p-4 cursor-pointer transition-all hover:opacity-90"
@@ -409,6 +413,35 @@ onClick={() => {
           />
         </div>
 
+<div>
+  <label
+    className="text-xs uppercase tracking-wider font-medium"
+    style={{ color: 'var(--text-secondary)' }}
+  >
+    Beløp
+  </label>
+
+  <input
+  type="number"
+  step="0.01"
+  inputMode="decimal"
+  value={editTransaction.amount}
+
+    onChange={(e) =>
+      setEditTransaction((prev) => ({
+        ...prev,
+        amount: e.target.value,
+      }))
+    }
+    className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
+
         <div>
           <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
             Kategori
@@ -503,6 +536,29 @@ onClick={() => {
           }}
         />
       </div>
+
+      <div className="mt-5">
+  <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+    Notat
+  </label>
+  <textarea
+    value={editTransaction.note}
+    onChange={(e) =>
+      setEditTransaction((prev) => ({
+        ...prev,
+        note: e.target.value,
+      }))
+    }
+    rows={3}
+    placeholder="Skriv eget notat til transaksjonen..."
+    className="mt-2 w-full rounded-lg px-3 py-3 text-sm outline-none resize-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
 
       <div className="mt-5">
         <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
