@@ -325,9 +325,9 @@ const transactionBlocks = dateMatches.map((match, index) => {
 
 const parsedTransactionsPreview = transactionBlocks
   .map((block) => {
-    const amountMatches = [
-      ...block.rawText.matchAll(/\b\d{1,3}(?:\s?\d{3})*,\d{2}\b/g),
-    ];
+   const amountMatches = [
+  ...block.rawText.matchAll(/\b\d+(?:,\d{2})\b/g),
+];
 
     const amountText = amountMatches[0]?.[0] ?? null;
 
