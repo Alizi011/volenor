@@ -416,7 +416,13 @@ ${JSON.stringify(firstTransaction, null, 2)}
   },
 });
 
+
+console.log("========== OPENAI RAW ==========");
+console.dir(aiResponse, { depth: null });
+console.log("================================");
+
 aiPreview = JSON.parse(aiResponse.output_text);
+
 console.log("========== AI SVAR ==========");
 console.log(aiPreview);
 console.log("=============================");
