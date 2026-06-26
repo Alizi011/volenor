@@ -2,14 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Landmark, FileText, Eye } from 'lucide-react';
 import Header from '../components/Header';
+import BankStatementDetails from './BankStatementDetails';
 
 type BankStatement = {
   id: string | number;
+  name?: string | null;
   bankName?: string | null;
   accountNumber?: string | null;
   periodStart?: string | null;
   periodEnd?: string | null;
-  filePath?: string | null;
+  fileData?: string | null;
+  status?: string | null;
   createdAt?: string | null;
 };
 
@@ -22,6 +25,7 @@ export default function BankStatements({
 }: BankStatementsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [bankStatements, setBankStatements] = useState<BankStatement[]>([]);
+  const [selectedStatement, setSelectedStatement] = useState<BankStatement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -80,6 +84,23 @@ export default function BankStatements({
     return `${formatDate(start)} – ${formatDate(end)}`;
   };
 
+        if (selectedStatement) {
+
+  return (
+
+    <BankStatementDetails
+
+      statement={selectedStatement}
+
+      onBack={() => setSelectedStatement(null)}
+
+      addToast={addToast}
+
+    />
+
+  );
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Header
@@ -108,7 +129,7 @@ export default function BankStatements({
     </p>
   </div>
 ) : filteredStatements.length === 0 ? (
-    
+
           <div className="flex flex-col items-center justify-center py-20">
             <Landmark size={64} className="mb-4" style={{ color: 'var(--text-secondary)', opacity: 0.3 }} />
             <p className="text-base mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -174,7 +195,7 @@ export default function BankStatements({
 
                 <button
                   type="button"
-                  onClick={() => addToast('info', 'Detaljside kommer i neste steg')}
+                  onClick={() => setSelectedStatement(statement)}
                   className="flex items-center justify-center gap-2 h-9 rounded-lg text-xs font-medium"
                   style={{
                     backgroundColor: 'var(--bg-tertiary)',
