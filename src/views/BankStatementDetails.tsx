@@ -142,6 +142,34 @@ else {
               </div>
             )}
           </div>
+
+
+          {analysisResult?.aiPreview && (
+  <div
+    className="mt-4 rounded-xl p-4"
+    style={{
+      backgroundColor: 'var(--bg-secondary)',
+      border: '1px solid var(--border-color)',
+    }}
+  >
+    <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+      AI-tolket transaksjon
+    </h3>
+
+    <div className="grid grid-cols-2 gap-3 text-xs">
+      <Info label="Dato" value={analysisResult.aiPreview.date || 'Ukjent'} />
+      <Info label="Beløp" value={`${analysisResult.aiPreview.amount ?? 'Ukjent'} kr`} />
+      <Info label="Type" value={analysisResult.aiPreview.direction || 'unknown'} />
+      <Info label="Kategori" value={analysisResult.aiPreview.category || 'Ikke satt'} />
+      <Info label="Motpart" value={analysisResult.aiPreview.merchant || 'Ikke funnet'} />
+      <Info label="Sikkerhet" value={`${Math.round((analysisResult.aiPreview.confidence ?? 0) * 100)} %`} />
+    </div>
+
+    <div className="mt-3">
+      <Info label="Beskrivelse" value={analysisResult.aiPreview.description || 'Ingen beskrivelse'} />
+    </div>
+  </div>
+)}
           {analysisResult?.transactionBlocks && (
   <div
     className="mt-4 rounded-xl p-4 max-h-72 overflow-y-auto"
