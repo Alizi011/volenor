@@ -368,36 +368,58 @@ const parsedTransactionsPreview = transactionBlocks
 let aiPreview = null;
 
 if (firstTransaction) {
-  const aiResponse = await openai.responses.create({
-    model: "gpt-4.1-mini",
-    input: `
+const aiResponse = await openai.responses.create({
+  model: "gpt-4.1-mini",
+  input: `
 Du er en norsk banktransaksjons-parser.
 
-Tolk denne banktransaksjonen og returner KUN gyldig JSON.
+Tolk denne banktransaksjonen.
 
 Transaksjon:
 ${JSON.stringify(firstTransaction, null, 2)}
-
-Returner format:
-{
-  "date": "YYYY-MM-DD",
-  "amount": number,
-  "direction": "income" | "expense" | "unknown",
-  "description": string,
-  "merchant": string | null,
-  "category": string | null,
-  "confidence": number
-}
 `,
-  });
+  text: {
+    format: {
+      type: "json_schema",
+      name: "bank_transaction",
+      strict: true,
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          date: { type: "string" },
+          amount: { type: "number" },
+          direction: {
+            type: "string",
+            enum: ["income", "expense", "unknown"],
+          },
+          description: { type: "string" },
+          merchant: {
+            type: ["string", "null"],
+          },
+          category: {
+            type: ["string", "null"],
+          },
+          confidence: { type: "number" },
+        },
+        required: [
+          "date",
+          "amount",
+          "direction",
+          "description",
+          "merchant",
+          "category",
+          "confidence",
+        ],
+      },
+    },
+  },
+});
 
-  const cleanedAiText = aiResponse.output_text
-  .replace(/```json/g, "")
-  .replace(/```/g, "")
-  .trim();
-
-aiPreview = JSON.parse(cleanedAiText)
+aiPreview = JSON.parse(aiResponse.output_text);
 }
+
+console.log("========== BANKANALYSE ==========");
 
 console.log("========== BANKANALYSE ==========");
 console.log("statementId:", statement.id);
