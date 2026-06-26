@@ -302,6 +302,30 @@ const pdfBuffer = fs.readFileSync(pdfPath);
 const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
 const { totalPages, text } = await extractText(pdf, { mergePages: true });
 
+const transactionDateRegex = /\b\d{4}-\d{2}-\d{2}\b/g;
+
+const dateMatches = [...text.matchAll(transactionDateRegex)];
+
+const transactionsPreview = dateMatches.slice(0, 20).map((match, index) => {
+  const start = match.index ?? 0;
+  const nextStart = dateMatches[index + 1]?.index ?? text.length;
+
+  const chunk = text.slice(start, nextStart).replace(/\s+/g, " ").trim();
+
+  const amountMatches = [...chunk.matchAll(/\b\d{1,3}(?:\s?\d{3})*,\d{2}\b/g)];
+  const amountText = amountMatches[amountMatches.length - 1]?.[0] ?? null;
+
+  const amount = amountText
+    ? Number(amountText.replace(/\s/g, "").replace(",", "."))
+    : null;
+
+  return {
+    date: match[0],
+    rawText: chunk,
+    amount,
+  };
+});
+
 console.log("========== BANKANALYSE ==========");
 console.log("statementId:", statement.id);
 console.log("bank:", statement.bankName);
@@ -309,6 +333,8 @@ console.log("fileData:", statement.fileData);
 console.log("PDF:", pdfPath);
 console.log("Sider:", totalPages);
 console.log("Tekstutdrag:", text.slice(0, 1000));
+console.log("Transaksjoner funnet:", transactionsPreview.length);
+console.log("Transaksjonsutdrag:", transactionsPreview.slice(0, 5));
 console.log("=================================");
 
     return c.json({
@@ -316,8 +342,9 @@ console.log("=================================");
   message: "PDF ble lest",
   totalPages,
   textPreview: text.slice(0, 1000),
+  transactionsPreview,
   statement: {
-    
+
         id: String(statement.id),
         householdId: statement.householdId,
         familyMemberId: statement.familyMemberId,
