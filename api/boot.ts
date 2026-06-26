@@ -237,6 +237,7 @@ app.get("/api/bank_statements", async (c) => {
 // --- ENDEPUNKT FOR Å STARTE ANALYSE AV BANKUTSKRIFT ---
 app.post("/api/analyze_bank_statement", async (c) => {
   try {
+    console.log("OPENAI_API_KEY finnes:", !!process.env.OPENAI_API_KEY);
     const body = await c.req.json();
     const statementId = body.statementId;
 
