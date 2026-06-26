@@ -26,6 +26,8 @@ export default function BankStatementDetails({
 }: BankStatementDetailsProps) {
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const [savedTransactions, setSavedTransactions] = useState<any[]>([]);
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
+  
 
 const fetchSavedTransactions = async () => {
   try {
@@ -243,7 +245,8 @@ const formattedDate = txDate
         return (
           <div
             key={tx.sourceIndex ?? i}
-            className="rounded-lg p-4"
+            onClick={() => setSelectedTransaction(tx)}
+            className="rounded-lg p-4 cursor-pointer transition-all hover:opacity-90"
             style={{ backgroundColor: 'var(--bg-tertiary)' }}
           >
             <div className="flex items-start justify-between gap-4">
@@ -291,6 +294,78 @@ const formattedDate = txDate
   </div>
 )}
 
+
+{selectedTransaction && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center"
+    style={{ backgroundColor: 'rgba(0,0,0,0.65)' }}
+    onClick={() => setSelectedTransaction(null)}
+  >
+    <div
+      className="w-full max-w-2xl rounded-xl p-6"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {selectedTransaction.merchant || selectedTransaction.description || 'Transaksjon'}
+          </h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+            {selectedTransaction.category || 'Ikke kategorisert'}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSelectedTransaction(null)}
+          className="h-9 px-3 rounded-lg text-sm"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          Lukk
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <Info label="Dato" value={selectedTransaction.transactionDate || selectedTransaction.date || 'Ukjent'} />
+        <Info label="Beløp" value={`${selectedTransaction.amount ?? 'Ukjent'} kr`} />
+        <Info label="Type" value={selectedTransaction.direction === 'income' ? 'Innbetaling' : 'Utbetaling'} />
+        <Info label="AI-sikkerhet" value={`${selectedTransaction.aiConfidence ?? Math.round((selectedTransaction.confidence ?? 0) * 100)} %`} />
+        <Info label="Motpart" value={selectedTransaction.merchant || 'Ikke funnet'} />
+        <Info label="Kategori" value={selectedTransaction.category || 'Ikke satt'} />
+      </div>
+
+      <div className="mt-5">
+        <Info label="Beskrivelse" value={selectedTransaction.description || 'Ingen beskrivelse'} />
+      </div>
+
+      <div className="mt-5">
+        <label
+          className="text-xs uppercase tracking-wider font-medium"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Original tekst fra bankutskrift
+        </label>
+
+        <pre
+          className="mt-2 rounded-lg p-3 text-xs whitespace-pre-wrap max-h-48 overflow-y-auto"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          {selectedTransaction.rawText || 'Ingen originaltekst lagret'}
+        </pre>
+      </div>
+    </div>
+  </div>
+)}
 
         </main>
       </div>
