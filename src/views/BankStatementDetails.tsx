@@ -64,7 +64,31 @@ export default function BankStatementDetails({
 
         <button
           type="button"
-          onClick={() => addToast('info', 'AI-analyse kommer i neste steg')}
+          onClick={async () => {
+  try {
+    const response = await fetch('/api/analyze_bank_statement', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        statementId: statement.id,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      addToast('success', 'Analyse startet');
+      console.log(result.statement);
+    } else {
+      addToast('error', result.message || 'Analyse mislyktes');
+    }
+  } catch (error) {
+    console.error(error);
+    addToast('error', 'Kunne ikke kontakte serveren');
+  }
+}}
           className="flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium"
           style={{
             backgroundColor: 'var(--accent-yellow)',
