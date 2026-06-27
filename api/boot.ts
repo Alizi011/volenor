@@ -34,6 +34,59 @@ if (!fs.existsSync(uploadDir)) {
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
 
+app.put("/api/documents/:id", async (c) => {
+  try {
+    const id = Number(c.req.param("id"));
+    const body = await c.req.json();
+
+    const amount =
+      body.amount === undefined || body.amount === null || body.amount === ""
+        ? 0
+        : Number(String(body.amount).replace(",", "."));
+
+    if (!Number.isFinite(amount)) {
+      return c.json(
+        {
+          success: false,
+          message: "Beløp er ugyldig",
+        },
+        400
+      );
+    }
+
+    const tags = body.tags ?? "";
+
+    await getDb().execute(sql`
+      UPDATE documents
+      SET
+        name = ${body.name ?? ""},
+        category = ${body.category ?? ""},
+        date = ${body.date ?? new Date().toISOString().slice(0, 10)},
+        amount = ${amount},
+        tags = ${tags},
+        notes = ${body.notes ?? ""}
+      WHERE id = ${id}
+    `);
+
+    return c.json({
+      success: true,
+      message: "Dokument oppdatert",
+    });
+
+  } catch (error: any) {
+    console.error("Feil ved oppdatering av dokument:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
+
 // --- ENDEPUNKT FOR LIVE FILOPPLASTING ---
 app.post("/api/last_opp", async (c) => {
   try {
@@ -65,7 +118,7 @@ app.post("/api/last_opp", async (c) => {
     const type = (body["type"] as "pdf" | "image" | "doc") || "pdf";
     const householdId = parseInt((body["householdId"] as string) || "1");
     const familyMemberId = body["familyMemberId"] ? parseInt(body["familyMemberId"] as string) : null;
-    const amount = parseInt((body["amount"] as string) || "0");
+    const amount = Number(String(body["amount"] || "0").replace(",", "."));
     const financeType = (body["financeType"] as string) || "none";
     const dueDate = (body["dueDate"] as string) || null;
     const isPaid = body["isPaid"] === "1" ? 1 : 0;

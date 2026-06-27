@@ -67,6 +67,14 @@ export default function Documents({
   const [searchQuery, setSearchQuery] = useState('');
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; docId: string } | null>(null);
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
+  const [editDocument, setEditDocument] = useState({
+  name: '',
+  category: '',
+  date: '',
+  amount: '',
+  tags: '',
+  notes: '',
+});
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false); // Ny tilstand for å styre opplastingsmodalen herfra
 
@@ -138,6 +146,57 @@ export default function Documents({
     setContextMenu(null);
     addToast('info', 'Dokument slettet');
   };
+
+const openDocumentPreview = (doc: Document) => {
+  setPreviewDoc(doc);
+
+  setEditDocument({
+    name: doc.name ?? '',
+    category: doc.category ?? '',
+    date: doc.date ?? '',
+    amount: String((doc as any).amount ?? ''),
+    tags: Array.isArray(doc.tags) ? doc.tags.join(', ') : '',
+    notes: doc.notes ?? '',
+  });
+};
+
+const saveDocumentChanges = async () => {
+  if (!previewDoc) return;
+
+  try {
+    const response = await fetch(`/api/documents/${previewDoc.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: editDocument.name,
+        category: editDocument.category,
+        date: editDocument.date,
+        amount: Number(editDocument.amount || 0),
+        tags: editDocument.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean),
+        notes: editDocument.notes,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      addToast('success', 'Dokument oppdatert');
+      setPreviewDoc(null);
+      window.location.reload();
+    } else {
+      addToast('error', result.message || 'Kunne ikke lagre dokumentet');
+    }
+  } catch (error) {
+    console.error(error);
+    addToast('error', 'Kunne ikke kontakte serveren');
+  }
+};
+
 
   // --- FUNKSJONER FOR KLIKK OG DRAG & DROP PÅ DEN STIPLED BOKSEN ---
   const handleBoxClick = () => {
@@ -492,7 +551,7 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
-                    onClick={() => setPreviewDoc(doc)}
+                    onClick={() => openDocumentPreview(doc)}
                     onContextMenu={(e) => handleContextMenu(e, doc.id)}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -542,7 +601,7 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                     transition={{ delay: i * 0.03 }}
                     className="rounded-xl p-5 cursor-pointer transition-all duration-200"
                     style={{ backgroundColor: 'var(--bg-secondary)' }}
-                    onClick={() => setPreviewDoc(doc)}
+                    onClick={() => openDocumentPreview(doc)}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-4px)';
                       e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
@@ -974,7 +1033,15 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
               }}
             >
               {[
-                { icon: Eye, label: 'Åpne', action: () => { setPreviewDoc(documents.find(d => d.id === contextMenu.docId) || null); setContextMenu(null); } },
+                {
+  icon: Eye,
+  label: 'Åpne',
+  action: () => {
+    const doc = documents.find(d => d.id === contextMenu.docId);
+    if (doc) openDocumentPreview(doc);
+    setContextMenu(null);
+  },
+},
                 { icon: Download, label: 'Last ned', action: () => { setContextMenu(null); addToast('info', 'Nedlasting startet'); } },
                 { icon: Pencil, label: 'Endre navn', action: () => { setContextMenu(null); } },
                 { icon: FolderInput, label: 'Flytt til...', action: () => { setContextMenu(null); } },
@@ -1043,9 +1110,22 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                 className="flex items-center justify-between px-6 py-4 shrink-0"
                 style={{ borderBottom: '1px solid var(--border-color)' }}
               >
-                <h3 className="text-base font-semibold truncate pr-4" style={{ color: 'var(--text-primary)' }}>
-                  {previewDoc.name}
-                </h3>
+                <input
+  type="text"
+  value={editDocument.name}
+  onChange={(e) =>
+    setEditDocument((prev) => ({
+      ...prev,
+      name: e.target.value,
+    }))
+  }
+  className="flex-1 h-10 rounded-lg px-3 text-sm font-semibold outline-none"
+  style={{
+    backgroundColor: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-primary)',
+  }}
+/>
                 <button
                   onClick={() => setPreviewDoc(null)}
                   className="p-1.5 rounded-lg transition-colors"
@@ -1092,63 +1172,172 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
               </div>
 
                 <div className="space-y-4">
+
+                <div>
+                  <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    Kategori
+                  </label>
+                  <select
+                    value={editDocument.category}
+                    onChange={(e) =>
+                      setEditDocument((prev) => ({
+                        ...prev,
+                        category: e.target.value,
+                      }))
+                    }
+                    className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {allCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                   <div>
-                    <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Kategori
-                    </label>
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-primary)' }}>
-                      {getCategoryInfo(previewDoc.category)?.label}
-                    </p>
-                  </div>
+  <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+    Dato
+  </label>
+  <input
+    type="date"
+    value={editDocument.date}
+    onChange={(e) =>
+      setEditDocument((prev) => ({
+        ...prev,
+        date: e.target.value,
+      }))
+    }
+    className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
+
+
+             <div>
+  <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+    Beløp
+  </label>
+  <input
+    type="number"
+    step="0.01"
+    inputMode="decimal"
+    value={editDocument.amount}
+    onChange={(e) =>
+      setEditDocument((prev) => ({
+        ...prev,
+        amount: e.target.value,
+      }))
+    }
+    className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
+                <div>
+  <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+    Tags
+  </label>
+  <input
+    type="text"
+    value={editDocument.tags}
+    onChange={(e) =>
+      setEditDocument((prev) => ({
+        ...prev,
+        tags: e.target.value,
+      }))
+    }
+    placeholder="Skilt med komma..."
+    className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
                   <div>
-                    <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Dato
-                    </label>
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-primary)' }}>
-                      {formatDate(previewDoc.date)}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Størrelse
-                    </label>
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-primary)' }}>
-                      {formatSize(previewDoc.size)}
-                    </p>
-                  </div>
-                  {previewDoc.tags.length > 0 && (
-                    <div>
-                      <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>Tags</label>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {previewDoc.tags.map((tag) => (
-                          <span key={tag} className="text-xs px-2 py-0.5 rounded-md" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {previewDoc.notes && (
-                    <div>
-                      <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>Notater</label>
-                      <p className="text-sm mt-1" style={{ color: 'var(--text-primary)' }}>{previewDoc.notes}</p>
-                    </div>
-                  )}
+  <label
+    className="text-xs uppercase tracking-wider font-medium"
+    style={{ color: 'var(--text-secondary)' }}
+  >
+    Notater
+  </label>
+
+  <textarea
+    value={editDocument.notes}
+    onChange={(e) =>
+      setEditDocument((prev) => ({
+        ...prev,
+        notes: e.target.value,
+      }))
+    }
+    rows={4}
+    placeholder="Skriv notater om dokumentet..."
+    className="mt-2 w-full rounded-lg px-3 py-3 text-sm outline-none resize-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
                 </div>
               </div>
 
-              <div className="flex gap-3 px-6 py-4 shrink-0" style={{ borderTop: '1px solid var(--border-color)' }}>
-                <button className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
-                  <Download size={16} /> Last ned
-                </button>
-                <button
-                  onClick={() => { handleDelete(previewDoc.id); setPreviewDoc(null); }}
-                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
-                  style={{ backgroundColor: 'var(--accent-red)', color: '#fff' }}
-                >
-                  <Trash2 size={16} /> Slett
-                </button>
-              </div>
+              <div
+              className="flex gap-3 px-6 py-4 shrink-0"
+              style={{ borderTop: '1px solid var(--border-color)' }}
+            >
+              <button
+                className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <Download size={16} />
+                Last ned
+              </button>
+
+              <button
+                onClick={saveDocumentChanges}
+                className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
+                style={{
+                  backgroundColor: 'var(--accent-yellow)',
+                  color: '#0a0a0a',
+                }}
+              >
+                Lagre endringer
+              </button>
+
+              <button
+                onClick={() => {
+                  handleDelete(previewDoc.id);
+                  setPreviewDoc(null);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
+                style={{
+                  backgroundColor: 'var(--accent-red)',
+                  color: '#fff',
+                }}
+              >
+                <Trash2 size={16} />
+                Slett
+              </button>
+            </div>
             </motion.div>
           </>
         )}
