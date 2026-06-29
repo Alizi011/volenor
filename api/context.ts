@@ -87,6 +87,6 @@ if (user) {
     familyMemberId: familyMember?.id ?? null,
   };
 }
-
+console.log("CTX USER:", ctx.user);
   return ctx;
 }
