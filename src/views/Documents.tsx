@@ -156,7 +156,10 @@ const openDocumentPreview = (doc: Document) => {
     name: doc.name ?? '',
     category: doc.category ?? '',
     date: doc.date ?? '',
-    amount: String((doc as any).amount ?? ''),
+    amount:
+  (doc as any).amount !== null && (doc as any).amount !== undefined
+    ? String((doc as any).amount)
+    : '',
     tags: Array.isArray(doc.tags) ? doc.tags.join(', ') : '',
     notes: doc.notes ?? '',
   });
@@ -1058,9 +1061,48 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
     setContextMenu(null);
   },
 },
-                { icon: Download, label: 'Last ned', action: () => { setContextMenu(null); addToast('info', 'Nedlasting startet'); } },
-                { icon: Pencil, label: 'Endre navn', action: () => { setContextMenu(null); } },
-                { icon: FolderInput, label: 'Flytt til...', action: () => { setContextMenu(null); } },
+             {
+  icon: Download,
+  label: 'Last ned',
+  action: () => {
+    const doc = documents.find(d => d.id === contextMenu.docId);
+
+    if (doc?.fileData) {
+      window.open(doc.fileData, '_blank');
+    } else {
+      addToast('warning', 'Ingen fil å laste ned');
+    }
+
+    setContextMenu(null);
+  },
+},
+{
+  icon: Pencil,
+  label: 'Endre navn',
+  action: () => {
+    const doc = documents.find(d => d.id === contextMenu.docId);
+
+    if (doc) {
+      openDocumentPreview(doc);
+    }
+
+    setContextMenu(null);
+  },
+},
+{
+  icon: FolderInput,
+  label: 'Flytt til...',
+  action: () => {
+    const doc = documents.find(d => d.id === contextMenu.docId);
+
+    if (doc) {
+      openDocumentPreview(doc);
+      addToast('info', 'Velg ny kategori i panelet og trykk Lagre endringer');
+    }
+
+    setContextMenu(null);
+  },
+},
               ].map((item) => (
                 <button
                   key={item.label}
