@@ -177,7 +177,7 @@ export default function Finances({
 
   const handleAddEntry = () => {
     if (!newTitle.trim() || !newAmount) return;
-    const amount = Math.round(parseFloat(newAmount.replace(',', '.')) * 100);
+    const amount = parseFloat(newAmount.replace(',', '.'));
     if (isNaN(amount) || amount <= 0) return;
 
     onAddFinance({
@@ -202,7 +202,7 @@ export default function Finances({
   };
 
   const formatNOK = (amount: number) => {
-    return new Intl.NumberFormat('nb-NO', { style: 'currency', currency: 'NOK' }).format(amount / 100);
+    return new Intl.NumberFormat('nb-NO', { style: 'currency', currency: 'NOK' }).format(amount);
   };
 
   const incomeChange = prevMonthStats.income > 0 ? ((monthlyStats.income - prevMonthStats.income) / prevMonthStats.income) * 100 : 0;

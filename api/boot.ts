@@ -54,7 +54,7 @@ app.put("/api/documents/:id", async (c) => {
       );
     }
 
-    const tags = body.tags ?? "";
+    const tags = JSON.stringify(body.tags ?? []);
 
     await getDb().execute(sql`
       UPDATE documents
@@ -74,7 +74,9 @@ app.put("/api/documents/:id", async (c) => {
     });
 
   } catch (error: any) {
-    console.error("Feil ved oppdatering av dokument:", error);
+    console.error(error);
+    console.error(error.message);
+    console.error(error.stack);
 
     return c.json(
       {
@@ -660,7 +662,7 @@ app.put("/api/bank_transactions/:id", async (c) => {
         description = ${body.description ?? ""},
         direction = ${body.direction ?? "expense"},
         matchStatus = ${body.matchStatus ?? "unmatched"},
-        amount = ${amount}
+        amount = ${amount},
         note = ${body.note ?? null}
       WHERE id = ${id}
     `);

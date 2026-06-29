@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Routes, Route, Navigate } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { AppView } from './types';
+import type { AppView, Document } from './types';
 import { useSettings } from './hooks/useStorage';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
@@ -43,7 +43,8 @@ function MainApp() {
   const { toasts, addToast, removeToast } = useToast();
 
   // Backend data via tRPC
-  const { documents, addDocument, deleteDocument } = useSynapseDocuments();
+ const { documents, addDocument, deleteDocument } = useSynapseDocuments();
+
   const { tasks, addTask, updateTask, deleteTask } = useSynapseTasks();
   const { inbox, addInboxItem, removeInboxItem } = useSynapseInbox();
   const { finances, addFinance, deleteFinance } = useSynapseFinances();
@@ -160,13 +161,15 @@ function MainApp() {
                 onAddDocument={(doc: any) => {
                   addDocument(doc);
                   addToast('success', 'Dokument lagt til');
-                }}
-                
+                } }
+
                 onDeleteDocument={deleteDocument}
                 onAddCustomCategory={addCategory}
                 onDeleteCustomCategory={deleteCategory}
                 addToast={addToast}
-              />
+                onUpdateDocument={(updatedDoc: Document) => {
+                  addDocument(updatedDoc);
+                }}         />
             )}
             {currentView === 'tasks' && (
               <Tasks

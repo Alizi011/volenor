@@ -31,6 +31,7 @@ interface DocumentsProps {
   customCategories: CustomCategory[];
   onAddDocument: (doc: Partial<Document>) => void;
   onDeleteDocument: (id: string) => void;
+  onUpdateDocument: (doc: Document) => void;
   onAddCustomCategory: (cat: CustomCategory) => void;
   onDeleteCustomCategory: (id: string) => void;
   addToast: (type: 'success' | 'info' | 'warning' | 'error', message: string) => void;
@@ -57,6 +58,7 @@ export default function Documents({
   //onAddDocument,
   onDeleteDocument,
   onAddCustomCategory,
+  onUpdateDocument,
   onDeleteCustomCategory,
   addToast,
 }: DocumentsProps) {
@@ -185,9 +187,23 @@ const saveDocumentChanges = async () => {
     const result = await response.json();
 
     if (result.success) {
-      addToast('success', 'Dokument oppdatert');
-      setPreviewDoc(null);
-      window.location.reload();
+    const updatedDocument = {
+  ...previewDoc,
+  name: editDocument.name,
+  category: editDocument.category,
+  date: editDocument.date,
+  amount: Number(editDocument.amount || 0),
+  tags: editDocument.tags
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean),
+  notes: editDocument.notes,
+};
+
+onUpdateDocument(updatedDocument);
+addToast('success', 'Dokument oppdatert');
+setPreviewDoc(null);
+
     } else {
       addToast('error', result.message || 'Kunne ikke lagre dokumentet');
     }
@@ -1301,16 +1317,23 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
               className="flex gap-3 px-6 py-4 shrink-0"
               style={{ borderTop: '1px solid var(--border-color)' }}
             >
-              <button
-                className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
-                style={{
-                  backgroundColor: 'var(--bg-tertiary)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <Download size={16} />
-                Last ned
-              </button>
+             <button
+  onClick={() => {
+    if (previewDoc?.fileData) {
+      window.open(previewDoc.fileData, "_blank");
+    } else {
+      addToast("warning", "Ingen fil å laste ned");
+    }
+  }}
+  className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
+  style={{
+    backgroundColor: "var(--bg-tertiary)",
+    color: "var(--text-primary)",
+  }}
+>
+  <Download size={16} />
+  Last ned
+</button>
 
               <button
                 onClick={saveDocumentChanges}
