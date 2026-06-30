@@ -6,6 +6,7 @@ import {
   users,
   households,
   documents,
+  bankAccounts,
   tasks,
   calendarEvents,
   inboxItems,
@@ -314,6 +315,77 @@ export const synapseRouter = createRouter({
       await db().delete(financeEntries).where(eq(financeEntries.id, input.id));
       return { success: true };
     }),
+  }),
+
+    bankAccounts: createRouter({
+    list: authedQuery.query(async ({ ctx }) => {
+      const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+      return db()
+        .select()
+        .from(bankAccounts)
+        .where(eq(bankAccounts.householdId, householdId))
+        .orderBy(desc(bankAccounts.createdAt));
+    }),
+
+    create: authedQuery
+      .input(
+        z.object({
+          familyMemberId: z.number().nullable().optional(),
+          bankName: z.string().nullable().optional(),
+          accountNumber: z.string(),
+          accountName: z.string().nullable().optional(),
+          includeInAnalysis: z.number().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+        const result = await db()
+          .insert(bankAccounts)
+          .values({
+            householdId,
+            familyMemberId: input.familyMemberId ?? null,
+            bankName: input.bankName ?? null,
+            accountNumber: input.accountNumber,
+            accountName: input.accountName ?? null,
+            includeInAnalysis: input.includeInAnalysis ?? 1,
+          });
+
+        return { id: Number(result[0].insertId) };
+      }),
+
+    update: authedQuery
+      .input(
+        z.object({
+          id: z.number(),
+          data: z.object({
+            familyMemberId: z.number().nullable().optional(),
+            bankName: z.string().nullable().optional(),
+            accountNumber: z.string().optional(),
+            accountName: z.string().nullable().optional(),
+            includeInAnalysis: z.number().optional(),
+          }),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        await db()
+          .update(bankAccounts)
+          .set(input.data)
+          .where(eq(bankAccounts.id, input.id));
+
+        return { success: true };
+      }),
+
+    delete: authedQuery
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db()
+          .delete(bankAccounts)
+          .where(eq(bankAccounts.id, input.id));
+
+        return { success: true };
+      }),
   }),
 
   budgets: createRouter({
