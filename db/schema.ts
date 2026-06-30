@@ -219,6 +219,22 @@ export const bankStatements = mysqlTable("bank_statements", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const bankAccounts = mysqlTable("bank_accounts", {
+  id: id(),
+  householdId: int("householdId", { unsigned: true }).notNull(),
+  familyMemberId: int("familyMemberId", { unsigned: true }),
+  bankName: varchar("bankName", { length: 100 }),
+  accountNumber: varchar("accountNumber", { length: 50 }).notNull(),
+  accountName: varchar("accountName", { length: 255 }),
+  includeInAnalysis: int("includeInAnalysis", { unsigned: true })
+    .default(1)
+    .notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BankAccount = typeof bankAccounts.$inferSelect;
+export type InsertBankAccount = typeof bankAccounts.$inferInsert;
+
 // Bank Transactions
 export const bankTransactions = mysqlTable("bank_transactions", {
   id: id(),
