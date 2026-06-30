@@ -35,6 +35,15 @@ const fmtDoc = (d: any) => ({
 const fmtTask = (d: any) => ({ ...d, id: safeId(d.id), tags: parseJsonArr(d.tags), notes: d.notes ?? '' });
 const fmtInbox = (d: any) => ({ ...d, id: safeId(d.id), size: d.size ?? 0 });
 const fmtFinance = (d: any) => ({ ...d, id: safeId(d.id), notes: d.notes ?? '', isRecurring: !!d.isRecurring });
+const fmtBankAccount = (d: any) => ({
+  ...d,
+  id: safeId(d.id),
+  familyMemberId: d.familyMemberId ?? null,
+  bankName: d.bankName ?? '',
+  accountNumber: d.accountNumber ?? '',
+  accountName: d.accountName ?? '',
+  includeInAnalysis: Number(d.includeInAnalysis ?? 1),
+});
 const fmtFamily = (d: any) => ({ ...d, id: safeId(d.id), notes: d.notes ?? '' });
 const fmtDebt = (d: any) => ({ ...d, id: safeId(d.id), documentIds: parseJsonArr(d.documentIds), notes: [], communications: [] });
 const fmtCat = (d: any) => ({ ...d, id: safeId(d.id) });
@@ -167,6 +176,34 @@ export function useSynapseFinances() {
   [create],
 ),
     deleteFinance: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
+  };
+}
+
+export function useSynapseBankAccounts() {
+  const utils = trpc.useUtils();
+  const { data, isLoading } = trpc.synapse.bankAccounts.list.useQuery();
+
+  const create = trpc.synapse.bankAccounts.create.useMutation({
+    onSuccess: () => utils.synapse.bankAccounts.list.invalidate(),
+  });
+
+  const update = trpc.synapse.bankAccounts.update.useMutation({
+    onSuccess: () => utils.synapse.bankAccounts.list.invalidate(),
+  });
+
+  const del = trpc.synapse.bankAccounts.delete.useMutation({
+    onSuccess: () => utils.synapse.bankAccounts.list.invalidate(),
+  });
+
+  return {
+    bankAccounts: (data ?? []).filter((d: any) => d.id != null).map(fmtBankAccount),
+    isLoading,
+    addBankAccount: useCallback((account: any) => create.mutate(account), [create]),
+    updateBankAccount: useCallback(
+      (id: string, data: any) => update.mutate({ id: Number(id), data }),
+      [update],
+    ),
+    deleteBankAccount: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
   };
 }
 
