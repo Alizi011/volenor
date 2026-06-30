@@ -46,8 +46,16 @@ export function useSynapseDocuments() {
   onSuccess: async () => {
     await utils.synapse.documents.list.invalidate();
       await utils.synapse.documents.list.refetch();
+  
     },
   });
+
+  const update = trpc.synapse.documents.update.useMutation({
+  onSuccess: async () => {
+    await utils.synapse.documents.list.invalidate();
+    await utils.synapse.documents.list.refetch();
+  },
+});
   
   const del = trpc.synapse.documents.delete.useMutation({ onSuccess: () => utils.synapse.documents.list.invalidate() });
 
@@ -68,6 +76,22 @@ export function useSynapseDocuments() {
       familyMemberId: doc.familyMemberId,
     }),
   [create],
+),
+
+updateDocument: useCallback(
+  (doc: any) =>
+    update.mutate({
+      id: Number(doc.id),
+      data: {
+        name: doc.name,
+        category: doc.category,
+        date: doc.date,
+        amount: Number(doc.amount ?? 0),
+        tags: JSON.stringify(doc.tags ?? []),
+        notes: doc.notes ?? '',
+      },
+    }),
+  [update],
 ),
 
     deleteDocument: useCallback((id: string) => del.mutate({ id: Number(id) }), [del]),
