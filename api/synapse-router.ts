@@ -69,6 +69,7 @@ export const synapseRouter = createRouter({
           : r.category,
       date: r.date || new Date().toISOString().slice(0, 10),
       size: r.size ? Number(r.size) : 0,
+      amount: r.amount !== null && r.amount !== undefined ? Number(r.amount) : null,
       type: r.type || "pdf",
       notes: r.notes || "",
       fileData: r.fileData || null,

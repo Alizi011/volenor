@@ -25,6 +25,10 @@ const fmtDoc = (d: any) => ({
   category: String(d.category ?? '').trim(),
   tags: parseJsonArr(d.tags),
   size: Number(d.size ?? 0),
+  amount:
+    d.amount !== null && d.amount !== undefined
+      ? Number(d.amount)
+      : null,
   notes: d.notes ?? '',
 });
 
