@@ -17,6 +17,7 @@ export interface Document {
   category: string;
   date: string;
   size: number;
+  amount?: number | null;
   type: FileType;
   tags: string[];
   notes: string;

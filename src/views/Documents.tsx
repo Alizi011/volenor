@@ -150,6 +150,7 @@ export default function Documents({
   };
 
 const openDocumentPreview = (doc: Document) => {
+   console.log("OPEN DOC TAGS:", doc.tags, typeof doc.tags, Array.isArray(doc.tags));
   setPreviewDoc(doc);
 
   setEditDocument({
