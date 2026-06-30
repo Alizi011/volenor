@@ -1176,22 +1176,32 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                 className="flex items-center justify-between px-6 py-4 shrink-0"
                 style={{ borderBottom: '1px solid var(--border-color)' }}
               >
-                <input
-  type="text"
-  value={editDocument.name}
-  onChange={(e) =>
-    setEditDocument((prev) => ({
-      ...prev,
-      name: e.target.value,
-    }))
-  }
-  className="flex-1 h-10 rounded-lg px-3 text-sm font-semibold outline-none"
-  style={{
-    backgroundColor: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-color)',
-    color: 'var(--text-primary)',
-  }}
-/>
+<div className="flex-1">
+  <label
+    className="text-xs uppercase tracking-wider font-medium"
+    style={{ color: 'var(--text-secondary)' }}
+  >
+    Dokumentnavn
+  </label>
+
+  <input
+    type="text"
+    value={editDocument.name}
+    onChange={(e) =>
+      setEditDocument((prev) => ({
+        ...prev,
+        name: e.target.value,
+      }))
+    }
+    placeholder="Skriv dokumentnavn..."
+    className="mt-2 w-full h-10 rounded-lg px-3 text-sm font-semibold outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
                 <button
                   onClick={() => setPreviewDoc(null)}
                   className="p-1.5 rounded-lg transition-colors"
@@ -1238,6 +1248,29 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
               </div>
 
                 <div className="space-y-4">
+
+                  <div>
+  <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+    Dokumentnavn
+  </label>
+  <input
+    type="text"
+    value={editDocument.name}
+    onChange={(e) =>
+      setEditDocument((prev) => ({
+        ...prev,
+        name: e.target.value,
+      }))
+    }
+    placeholder="Skriv dokumentnavn..."
+    className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  />
+</div>
 
                 <div>
                   <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
