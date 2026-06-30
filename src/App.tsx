@@ -28,6 +28,7 @@ import InboxView from './views/Inbox';
 import CalendarView from './views/Calendar';
 import Finances from './views/Finances';
 import BankStatements from './views/BankStatements';
+import BankAccounts from './views/BankAccounts';
 import Debts from './views/Debts';
 import Family from './views/Family';
 import Login from './pages/Login';
@@ -216,8 +217,12 @@ function MainApp() {
             )}
 
             {currentView === 'bankStatements' && (
-  <BankStatements addToast={addToast} />
-)}
+              <BankStatements addToast={addToast} />
+            )}
+
+            {currentView === 'bankAccounts' && (
+              <BankAccounts addToast={addToast} />
+            )}
             {currentView === 'debts' && (
               <Debts
                 cases={debtCases}
