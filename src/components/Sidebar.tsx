@@ -10,6 +10,7 @@ import {
   Calendar,
   BarChart3,
   Landmark,
+  CreditCard,
   Gavel,
   Users,
   Moon,
@@ -36,6 +37,7 @@ const navItems: { view: AppView; icon: React.ElementType; label: string }[] = [
   { view: 'calendar', icon: Calendar, label: 'Kalender' },
   { view: 'finances', icon: BarChart3, label: 'Finans' },
   { view: 'bankStatements', icon: Landmark, label: 'Bankutskrifter' },
+  { view: 'bankAccounts', icon: CreditCard, label: 'Bankkontoer' },
   { view: 'debts', icon: Gavel, label: 'Gjeld' },
   { view: 'family', icon: Users, label: 'Familie' },
 ];

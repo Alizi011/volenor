@@ -425,6 +425,91 @@ const transactionsForAi = parsedTransactionsPreview.slice(0, 50);
 let aiPreview = null;
 let aiTransactionsPreview: any[] = [];
 
+let aiStatementMetadata: any = {
+  bankName: null,
+  periodStart: null,
+  periodEnd: null,
+  accounts: [],
+};
+
+const metadataResponse = await openai.responses.create({
+  model: "gpt-4.1-mini",
+  input: `
+Du er en norsk bankutskrift-parser.
+
+Les teksten fra bankutskriften og hent ut metadata.
+
+Returner:
+- bankName: bankens navn hvis mulig
+- periodStart: startdato for perioden i format YYYY-MM-DD eller null
+- periodEnd: sluttdato for perioden i format YYYY-MM-DD eller null
+- accounts: alle kontonumre du finner i dokumentet
+
+For hver konto:
+- accountNumber
+- accountName hvis mulig
+- ownerName hvis mulig
+- includeSuggested: true hvis kontoen virker relevant for transaksjonsanalyse, false hvis den virker som oppsummering, lån, kredittkortoversikt eller ikke relevant
+
+Tekst fra bankutskrift:
+${text.slice(0, 6000)}
+`,
+  text: {
+    format: {
+      type: "json_schema",
+      name: "bank_statement_metadata",
+      strict: true,
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          bankName: { type: ["string", "null"] },
+          periodStart: { type: ["string", "null"] },
+          periodEnd: { type: ["string", "null"] },
+          accounts: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                accountNumber: { type: "string" },
+                accountName: { type: ["string", "null"] },
+                ownerName: { type: ["string", "null"] },
+                includeSuggested: { type: "boolean" },
+              },
+              required: [
+                "accountNumber",
+                "accountName",
+                "ownerName",
+                "includeSuggested"
+              ],
+            },
+          },
+        },
+        required: ["bankName", "periodStart", "periodEnd", "accounts"],
+      },
+    },
+  },
+});
+
+aiStatementMetadata = JSON.parse(metadataResponse.output_text);
+
+console.log("========== BANK METADATA ==========");
+console.log(aiStatementMetadata);
+console.log("==================================");
+
+
+
+await getDb().execute(sql`
+  UPDATE bank_statements
+  SET
+    bankName = ${aiStatementMetadata.bankName ?? statement.bankName},
+    periodStart = ${aiStatementMetadata.periodStart ?? statement.periodStart},
+    periodEnd = ${aiStatementMetadata.periodEnd ?? statement.periodEnd}
+  WHERE id = ${statement.id}
+`);
+
+
 if (transactionsForAi.length > 0) {
   const aiResponse = await openai.responses.create({
     model: "gpt-4.1-mini",
@@ -572,6 +657,7 @@ return c.json({
   parsedTransactionsPreview,
   aiPreview,
   aiTransactionsPreview,
+  aiStatementMetadata,
   statement: {
 
         id: String(statement.id),
