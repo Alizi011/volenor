@@ -160,7 +160,11 @@ const openDocumentPreview = (doc: Document) => {
   (doc as any).amount !== null && (doc as any).amount !== undefined
     ? String((doc as any).amount)
     : '',
-    tags: Array.isArray(doc.tags) ? doc.tags.join(', ') : '',
+    tags: Array.isArray(doc.tags)
+  ? doc.tags.join(', ')
+  : typeof doc.tags === 'string'
+    ? doc.tags
+    : '',
     notes: doc.notes ?? '',
   });
 };
