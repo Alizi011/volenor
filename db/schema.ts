@@ -232,6 +232,28 @@ export const bankAccounts = mysqlTable("bank_accounts", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const bankStatementAccounts = mysqlTable("bank_statement_accounts", {
+  id: id(),
+
+  statementId: int("statementId", { unsigned: true }).notNull(),
+
+  householdId: int("householdId", { unsigned: true }).notNull(),
+
+  accountNumber: varchar("accountNumber", { length: 50 }).notNull(),
+
+  accountName: varchar("accountName", { length: 255 }),
+
+  ownerName: varchar("ownerName", { length: 255 }),
+
+  includeSuggested: boolean("includeSuggested").default(true).notNull(),
+
+  matchedBankAccountId: int("matchedBankAccountId", {
+    unsigned: true,
+  }),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type BankAccount = typeof bankAccounts.$inferSelect;
 export type InsertBankAccount = typeof bankAccounts.$inferInsert;
 
