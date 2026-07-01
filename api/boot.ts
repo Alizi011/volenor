@@ -836,6 +836,97 @@ app.put("/api/bank_transactions/:id", async (c) => {
   }
 });
 
+app.get("/api/bank_statement_accounts/suggestions", async (c) => {
+  try {
+    const result: any = await getDb().execute(sql`
+      SELECT
+        bsa.*,
+        bs.bankName
+      FROM bank_statement_accounts bsa
+      LEFT JOIN bank_statements bs ON bs.id = bsa.statementId
+      WHERE bsa.matchedBankAccountId IS NULL
+      ORDER BY bsa.createdAt DESC
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    return c.json({
+      success: true,
+      suggestions: rows,
+    });
+  } catch (error: any) {
+    return c.json({ success: false, message: error.message }, 500);
+  }
+});
+
+app.post("/api/bank_accounts/from_suggestion", async (c) => {
+  try {
+    const body = await c.req.json();
+    const suggestionId = Number(body.suggestionId);
+    const familyMemberId = body.familyMemberId ? Number(body.familyMemberId) : null;
+
+    const result: any = await getDb().execute(sql`
+      SELECT *
+      FROM bank_statement_accounts
+      WHERE id = ${suggestionId}
+      LIMIT 1
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    const suggestion = rows[0];
+
+    if (!suggestion) {
+      return c.json({ success: false, message: "Forslag ikke funnet" }, 404);
+    }
+
+    const insertResult: any = await getDb().execute(sql`
+      INSERT INTO bank_accounts
+      (
+        householdId,
+        familyMemberId,
+        bankName,
+        accountNumber,
+        accountName,
+        includeInAnalysis
+      )
+      VALUES
+      (
+        ${suggestion.householdId},
+        ${familyMemberId},
+        ${body.bankName ?? null},
+        ${suggestion.accountNumber},
+        ${suggestion.accountName ?? null},
+        ${suggestion.includeSuggested ?? 1}
+      )
+    `);
+
+    const newAccountId = insertResult?.[0]?.insertId ?? insertResult?.insertId ?? null;
+
+    await getDb().execute(sql`
+      UPDATE bank_statement_accounts
+      SET matchedBankAccountId = ${newAccountId}
+      WHERE id = ${suggestionId}
+    `);
+
+    return c.json({
+      success: true,
+      message: "Bankkonto opprettet",
+      bankAccountId: newAccountId,
+    });
+  } catch (error: any) {
+    return c.json({ success: false, message: error.message }, 500);
+  }
+});
+
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Trash2, Landmark } from 'lucide-react';
 import Header from '../components/Header';
 import { useSynapseBankAccounts, useSynapseFamily } from '../hooks/useSynapse';
@@ -16,6 +16,48 @@ export default function BankAccounts({ addToast }: BankAccountsProps) {
   const [accountName, setAccountName] = useState('');
   const [familyMemberId, setFamilyMemberId] = useState<string>('');
   const [includeInAnalysis, setIncludeInAnalysis] = useState(true);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+
+const createFromSuggestion = async (suggestion: any) => {
+  const response = await fetch('/api/bank_accounts/from_suggestion', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      suggestionId: suggestion.id,
+      bankName: suggestion.bankName,
+      familyMemberId: null,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    addToast('success', 'Bankkonto opprettet fra AI-forslag');
+    await fetchSuggestions();
+    window.location.reload();
+  } else {
+    addToast('error', result.message || 'Kunne ikke opprette bankkonto');
+  }
+};
+
+const fetchSuggestions = async () => {
+  try {
+    const response = await fetch('/api/bank_statement_accounts/suggestions');
+    const result = await response.json();
+
+    if (result.success) {
+      setSuggestions(result.suggestions ?? []);
+    }
+  } catch (error) {
+    console.error('Kunne ikke hente kontoforslag:', error);
+  }
+};
+
+useEffect(() => {
+  fetchSuggestions();
+}, []);
 
   const handleAdd = () => {
     if (!accountNumber.trim()) {
@@ -133,6 +175,70 @@ export default function BankAccounts({ addToast }: BankAccountsProps) {
             Ta med i analyser
           </label>
         </div>
+
+        {suggestions.length > 0 && (
+          <div
+            className="rounded-xl p-5 mb-6"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+              AI fant bankkontoer
+            </h2>
+
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Disse kontoene ble funnet i analyserte bankutskrifter. Du kan opprette dem med ett klikk.
+            </p>
+
+            <div className="space-y-3">
+              {suggestions.map((suggestion: any) => (
+                <div
+                  key={suggestion.id}
+                  className="rounded-lg p-4 flex items-center gap-4"
+                  style={{
+                    backgroundColor: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: 'var(--bg-secondary)' }}
+                  >
+                    <Landmark size={18} style={{ color: 'var(--accent-yellow)' }} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {suggestion.accountName || suggestion.accountNumber}
+                    </p>
+
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      {suggestion.bankName || 'Ukjent bank'} · {suggestion.accountNumber}
+                    </p>
+
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      Eier funnet av AI: {suggestion.ownerName || 'Ikke funnet'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => createFromSuggestion(suggestion)}
+                    className="h-9 px-4 rounded-lg text-sm font-medium"
+                    style={{
+                      backgroundColor: 'var(--accent-yellow)',
+                      color: '#0a0a0a',
+                    }}
+                  >
+                    Opprett
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           {bankAccounts.length === 0 ? (
