@@ -240,30 +240,20 @@ export const bankTransactions = mysqlTable("bank_transactions", {
   id: id(),
 
   statementId: int("statementId", { unsigned: true }).notNull(),
-
   householdId: int("householdId", { unsigned: true }).notNull(),
+  familyMemberId: int("familyMemberId", { unsigned: true }),
+  bankAccountId: int("bankAccountId", { unsigned: true }),
 
   transactionDate: varchar("transactionDate", { length: 10 }).notNull(),
-
   description: varchar("description", { length: 255 }).notNull(),
 
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  balance: decimal("balance", { precision: 12, scale: 2 }),
 
-balance: decimal("balance", { precision: 12, scale: 2 }),
+  direction: mysqlEnum("direction", ["income", "expense"]).notNull(),
 
-
-  direction: mysqlEnum("direction", [
-    "income",
-    "expense",
-  ]).notNull(),
-
-  matchedFinanceEntryId: int("matchedFinanceEntryId", {
-    unsigned: true,
-  }),
-
-  matchedDocumentId: int("matchedDocumentId", {
-    unsigned: true,
-  }),
+  matchedFinanceEntryId: int("matchedFinanceEntryId", { unsigned: true }),
+  matchedDocumentId: int("matchedDocumentId", { unsigned: true }),
 
   matchStatus: mysqlEnum("matchStatus", [
     "unmatched",
@@ -273,6 +263,18 @@ balance: decimal("balance", { precision: 12, scale: 2 }),
   ]).default("unmatched").notNull(),
 
   aiConfidence: int("aiConfidence", { unsigned: true }),
+
+  merchant: varchar("merchant", { length: 255 }),
+  category: varchar("category", { length: 100 }),
+  rawText: text("rawText"),
+  note: text("note"),
+
+  receiptStatus: mysqlEnum("receiptStatus", [
+    "none",
+    "uploaded",
+    "ai_processed",
+    "verified",
+  ]).default("none").notNull(),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
