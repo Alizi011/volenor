@@ -523,6 +523,16 @@ Regler:
 - direction skal være "income", "expense" eller "unknown".
 - Bruk norsk kategori hvis mulig.
 - merchant er butikk/motpart hvis mulig, ellers null.
+- cashflowType skal være én av:
+  fixed_income, variable_income, fixed_expense, variable_expense,
+  internal_transfer, private_transfer, saving_investment,
+  one_time_income, one_time_expense, unknown.
+- Bruk internal_transfer ved overføring mellom egne kontoer.
+- Bruk private_transfer ved Vipps/familie/venner.
+- Bruk fixed_income for lønn/pensjon/NAV som gjentas.
+- Bruk fixed_expense for faste regninger som husleie, lån, forsikring.
+- Bruk variable_expense for vanlig forbruk som mat, transport, klær.
+- Bruk one_time_income eller one_time_expense når det virker som en engangshendelse.
 - confidence er mellom 0 og 1.
 
 Transaksjoner:
@@ -555,9 +565,25 @@ ${JSON.stringify(transactionsForAi, null, 2)}
                     type: ["string", "null"],
                   },
                   category: {
-                    type: ["string", "null"],
-                  },
-                  confidence: { type: "number" },
+  type: ["string", "null"],
+},
+cashflowType: {
+  type: "string",
+  enum: [
+    "fixed_income",
+    "variable_income",
+    "fixed_expense",
+    "variable_expense",
+    "internal_transfer",
+    "private_transfer",
+    "saving_investment",
+    "one_time_income",
+    "one_time_expense",
+    "unknown"
+  ],
+},
+confidence: { type: "number" },
+
                 },
                 required: [
                   "sourceIndex",
@@ -567,6 +593,7 @@ ${JSON.stringify(transactionsForAi, null, 2)}
                   "description",
                   "merchant",
                   "category",
+                  "cashflowType",
                   "confidence",
                 ],
               },
@@ -631,6 +658,7 @@ for (const tx of aiTransactionsPreview) {
       aiConfidence,
       merchant,
       category,
+      cashflowType,
       rawText,
       note,
       receiptStatus
@@ -650,6 +678,7 @@ for (const tx of aiTransactionsPreview) {
       ${Math.round((tx.confidence ?? 0) * 100)},
       ${tx.merchant ?? null},
       ${tx.category ?? null},
+      ${tx.cashflowType ?? "unknown"},
       ${parsedTransactionsPreview.find((p: any) => p.index === tx.sourceIndex)?.rawText ?? null},
       ${null},
       ${"none"}
