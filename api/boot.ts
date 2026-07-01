@@ -509,6 +509,34 @@ await getDb().execute(sql`
   WHERE id = ${statement.id}
 `);
 
+await getDb().execute(sql`
+  DELETE FROM bank_statement_accounts
+  WHERE statementId = ${statement.id}
+`);
+
+for (const account of aiStatementMetadata.accounts ?? []) {
+  await getDb().execute(sql`
+    INSERT INTO bank_statement_accounts
+    (
+      statementId,
+      householdId,
+      accountNumber,
+      accountName,
+      ownerName,
+      includeSuggested
+    )
+    VALUES
+    (
+      ${statement.id},
+      ${statement.householdId},
+      ${account.accountNumber},
+      ${account.accountName ?? null},
+      ${account.ownerName ?? null},
+      ${account.includeSuggested ? 1 : 0}
+    )
+  `);
+}
+
 
 if (transactionsForAi.length > 0) {
   const aiResponse = await openai.responses.create({
