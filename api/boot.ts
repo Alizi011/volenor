@@ -593,6 +593,8 @@ for (const tx of aiTransactionsPreview) {
     (
       statementId,
       householdId,
+      familyMemberId,
+      bankAccountId,
       transactionDate,
       description,
       amount,
@@ -602,12 +604,16 @@ for (const tx of aiTransactionsPreview) {
       aiConfidence,
       merchant,
       category,
-      rawText
+      rawText,
+      note,
+      receiptStatus
     )
     VALUES
     (
       ${statement.id},
       ${statement.householdId},
+      ${statement.familyMemberId ?? null},
+      ${null},
       ${tx.date},
       ${tx.description},
       ${tx.amount},
@@ -617,7 +623,9 @@ for (const tx of aiTransactionsPreview) {
       ${Math.round((tx.confidence ?? 0) * 100)},
       ${tx.merchant ?? null},
       ${tx.category ?? null},
-      ${parsedTransactionsPreview.find((p: any) => p.index === tx.sourceIndex)?.rawText ?? null}
+      ${parsedTransactionsPreview.find((p: any) => p.index === tx.sourceIndex)?.rawText ?? null},
+      ${null},
+      ${"none"}
     )
   `);
 }
