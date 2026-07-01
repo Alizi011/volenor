@@ -780,6 +780,7 @@ app.put("/api/bank_transactions/:id", async (c) => {
       SET
         merchant = ${body.merchant ?? null},
         category = ${body.category ?? null},
+        cashflowType = ${body.cashflowType ?? "unknown"},
         description = ${body.description ?? ""},
         direction = ${body.direction ?? "expense"},
         matchStatus = ${body.matchStatus ?? "unmatched"},

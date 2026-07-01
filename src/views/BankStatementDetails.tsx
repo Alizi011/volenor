@@ -28,9 +28,10 @@ export default function BankStatementDetails({
   const [savedTransactions, setSavedTransactions] = useState<any[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
 
-  const [editTransaction, setEditTransaction] = useState({
+const [editTransaction, setEditTransaction] = useState({
   merchant: '',
   category: '',
+  cashflowType: 'unknown',
   description: '',
   direction: 'expense',
   matchStatus: 'unmatched',
@@ -171,186 +172,133 @@ else {
         </button>
       </div>
 
-      <div className="flex-1 overflow-hidden grid grid-cols-[320px_1fr]">
-        <aside
-          className="p-6 overflow-y-auto"
-          style={{
-            backgroundColor: 'var(--bg-secondary)',
-            borderRight: '1px solid var(--border-color)',
-          }}
-        >
-          <div className="space-y-5">
-            <Info label="Bank" value={statement.bankName || 'Ikke satt'} />
-            <Info label="Kontonummer" value={statement.accountNumber || 'Ikke satt'} />
-            <Info label="Periode fra" value={formatDate(statement.periodStart)} />
-            <Info label="Periode til" value={formatDate(statement.periodEnd)} />
-            <Info label="Opplastet" value={formatDate(statement.createdAt)} />
-            <Info label="Status" value={statement.status || 'uploaded'} />
-          </div>
-        </aside>
-
-        <main className="p-6 overflow-y-auto">
-          <div
-            className="h-[65vh] rounded-xl overflow-hidden flex items-center justify-center"
-            style={{ backgroundColor: 'var(--bg-tertiary)' }}
-          >
-            {statement.fileData ? (
-              <iframe
-                src={statement.fileData}
-                title={statement.name || 'Bankutskrift'}
-                className="w-full h-full"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center">
-                <FileText size={64} style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Ingen PDF-fil funnet
-                </p>
-              </div>
-            )}
-          </div>
-
-
-          {analysisResult?.aiPreview && (
+<div className="flex-1 overflow-hidden flex flex-col">
   <div
-    className="mt-4 rounded-xl p-4"
+    className="mx-6 mt-5 rounded-xl p-4 grid grid-cols-2 md:grid-cols-6 gap-4"
     style={{
       backgroundColor: 'var(--bg-secondary)',
       border: '1px solid var(--border-color)',
     }}
   >
-    <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-      AI-tolket transaksjon
-    </h3>
-
-    <div className="grid grid-cols-2 gap-3 text-xs">
-      <Info label="Dato" value={analysisResult.aiPreview.date || 'Ukjent'} />
-      <Info label="Beløp" value={`${analysisResult.aiPreview.amount ?? 'Ukjent'} kr`} />
-      <Info label="Type" value={analysisResult.aiPreview.direction || 'unknown'} />
-      <Info label="Kategori" value={analysisResult.aiPreview.category || 'Ikke satt'} />
-      <Info label="Motpart" value={analysisResult.aiPreview.merchant || 'Ikke funnet'} />
-      <Info label="Sikkerhet" value={`${Math.round((analysisResult.aiPreview.confidence ?? 0) * 100)} %`} />
-    </div>
-
-    <div className="mt-3">
-      <Info label="Beskrivelse" value={analysisResult.aiPreview.description || 'Ingen beskrivelse'} />
-    </div>
+    <Info label="Bank" value={statement.bankName || 'Ikke satt'} />
+    <Info label="Kontonummer" value={statement.accountNumber || 'Ikke satt'} />
+    <Info label="Periode fra" value={formatDate(statement.periodStart)} />
+    <Info label="Periode til" value={formatDate(statement.periodEnd)} />
+    <Info label="Status" value={statement.status || 'uploaded'} />
+    <Info label="Transaksjoner" value={`${savedTransactions.length} stk`} />
   </div>
-)}
-         {(savedTransactions.length > 0 || analysisResult?.aiTransactionsPreview) && (
-  <div
-    className="mt-4 rounded-xl p-4 max-h-96 overflow-y-auto"
-    style={{
-      backgroundColor: 'var(--bg-secondary)',
-      border: '1px solid var(--border-color)',
-    }}
-  >
-    <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-      AI-tolkede transaksjoner
-    </h3>
+ 
+ <main className="p-6 overflow-hidden flex-1">
+  <div className="grid grid-cols-[450px_minmax(0,1fr)] gap-5 h-full min-h-0">
 
-    <div className="space-y-3">
+    <section
+      className="rounded-xl p-4 overflow-y-auto min-h-0"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
+      }}
+    >
+      <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+        Transaksjoner
+      </h3>
 
-      {(savedTransactions.length > 0 ? savedTransactions : analysisResult.aiTransactionsPreview).map((tx: any, i: number) => {
-        const isIncome = tx.direction === 'income';
-        const isExpense = tx.direction === 'expense';
+      {(savedTransactions.length > 0 || analysisResult?.aiTransactionsPreview) ? (
+        <div className="space-y-3">
+          {(savedTransactions.length > 0 ? savedTransactions : analysisResult.aiTransactionsPreview).map((tx: any, i: number) => {
+            const isIncome = tx.direction === 'income';
 
-        const typeLabel = isIncome
-          ? 'Innbetaling'
-          : isExpense
-            ? 'Utbetaling'
-            : 'Ukjent';
+            const title = tx.merchant || tx.description || 'Ukjent transaksjon';
+            const txDate = tx.transactionDate || tx.date;
 
-        const title =
-          tx.merchant ||
-          tx.description ||
-          'Ukjent transaksjon';
+            const formattedDate = txDate
+              ? new Date(txDate).toLocaleDateString('nb-NO', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })
+              : 'Ukjent dato';
 
-       const txDate = tx.transactionDate || tx.date;
+            const amount = Number(tx.amount ?? 0).toLocaleString('nb-NO', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
 
-const formattedDate = txDate
-  ? new Date(txDate).toLocaleDateString('nb-NO', {
+            return (
+              <div
+                key={tx.id ?? tx.sourceIndex ?? i}
+                onClick={() => {
+                  setSelectedTransaction(tx);
+                setEditTransaction({
+                merchant: tx.merchant ?? '',
+                category: tx.category ?? '',
+                cashflowType: tx.cashflowType ?? 'unknown',
+                description: tx.description ?? '',
+                direction: tx.direction ?? 'expense',
+                matchStatus: tx.matchStatus ?? 'unmatched',
+                amount: String(tx.amount ?? ''),
+                note: tx.note ?? '',
+              });
+                }}
+                className="rounded-lg p-4 cursor-pointer transition-all hover:opacity-90"
+                style={{ backgroundColor: 'var(--bg-tertiary)' }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                      {title}
+                    </p>
 
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-          : 'Ukjent dato';
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      {tx.category || 'Ikke kategorisert'} · {getCashflowLabel(tx.cashflowType)} · {formattedDate}
+                    </p>
+                  </div>
 
-        const amount = Number(tx.amount ?? 0).toLocaleString('nb-NO', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
-
-        const confidence =
-  tx.aiConfidence !== undefined && tx.aiConfidence !== null
-    ? Number(tx.aiConfidence)
-    : Math.round((tx.confidence ?? 0) * 100);
-
-        return (
-          <div
-            key={tx.sourceIndex ?? i}
-onClick={() => {
-  setSelectedTransaction(tx);
-
-  setEditTransaction({
-    merchant: tx.merchant ?? '',
-    category: tx.category ?? '',
-    description: tx.description ?? '',
-    direction: tx.direction ?? 'expense',
-    matchStatus: tx.matchStatus ?? 'unmatched',
-    amount: String(tx.amount ?? ''),
-    note: tx.note ?? '',
-  });
-}}
-            className="rounded-lg p-4 cursor-pointer transition-all hover:opacity-90"
-            style={{ backgroundColor: 'var(--bg-tertiary)' }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                  {title}
-                </p>
-
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  {tx.category || 'Ikke kategorisert'} · {typeLabel}
-                </p>
-
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  {formattedDate}
-                </p>
-
-                {!tx.merchant && tx.description && (
-                  <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    {tx.description}
+                  <p
+                    className="text-sm font-bold shrink-0"
+                    style={{
+                      color: isIncome ? 'var(--accent-green)' : 'var(--text-primary)',
+                    }}
+                  >
+                    {isIncome ? '+' : '-'}{amount} kr
                   </p>
-                )}
-
-                {confidence < 75 && (
-                  <p className="text-xs mt-2" style={{ color: 'var(--accent-orange)' }}>
-                    Lav AI-sikkerhet: {confidence} %
-                  </p>
-                )}
+                </div>
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Ingen transaksjoner analysert ennå.
+        </p>
+      )}
+    </section>
 
-              <div className="text-right shrink-0">
-                <p
-                  className="text-base font-bold"
-                  style={{
-                    color: isIncome ? 'var(--accent-green)' : 'var(--text-primary)',
-                  }}
-                >
-                  {isIncome ? '+' : '-'}{amount} kr
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <section
+      className="rounded-xl overflow-hidden h-full"
+      style={{ backgroundColor: 'var(--bg-tertiary)' }}
+    >
+      {statement.fileData ? (
+        <iframe
+        src={statement.fileData}
+        title={statement.name || 'Bankutskrift'}
+        className="w-full h-full border-0"
+        style={{
+          minHeight: '100%',
+          backgroundColor: '#fff',
+        }}
+      />
+      ) : (
+        <div className="flex flex-col items-center justify-center">
+          <FileText size={64} style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Ingen PDF-fil funnet
+          </p>
+        </div>
+      )}
+    </section>
+
   </div>
-)}
-
+</main>
 
 {selectedTransaction && (
   <div
@@ -488,6 +436,38 @@ onClick={() => {
           </select>
         </div>
 
+<div>
+  <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
+    Pengestrøm
+  </label>
+  <select
+    value={editTransaction.cashflowType}
+    onChange={(e) =>
+      setEditTransaction((prev) => ({
+        ...prev,
+        cashflowType: e.target.value,
+      }))
+    }
+    className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  >
+    <option value="unknown">Uklassifisert</option>
+    <option value="fixed_income">Fast inntekt</option>
+    <option value="variable_income">Variabel inntekt</option>
+    <option value="one_time_income">Engangsinntekt</option>
+    <option value="fixed_expense">Fast utgift</option>
+    <option value="variable_expense">Variabel utgift</option>
+    <option value="one_time_expense">Engangsutgift</option>
+    <option value="internal_transfer">Intern overføring</option>
+    <option value="private_transfer">Privat overføring</option>
+    <option value="saving_investment">Sparing/investering</option>
+  </select>
+</div>
+
         <div>
           <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
             Matchstatus
@@ -606,10 +586,35 @@ onClick={() => {
   </div>
 )}
 
-        </main>
+       
       </div>
     </div>
   );
+}
+
+function getCashflowLabel(value?: string | null) {
+  switch (value) {
+    case 'fixed_income':
+      return 'Fast inntekt';
+    case 'variable_income':
+      return 'Variabel inntekt';
+    case 'fixed_expense':
+      return 'Fast utgift';
+    case 'variable_expense':
+      return 'Variabel utgift';
+    case 'internal_transfer':
+      return 'Intern overføring';
+    case 'private_transfer':
+      return 'Privat overføring';
+    case 'saving_investment':
+      return 'Sparing/investering';
+    case 'one_time_income':
+      return 'Engangsinntekt';
+    case 'one_time_expense':
+      return 'Engangsutgift';
+    default:
+      return 'Uklassifisert';
+  }
 }
 
 function Info({ label, value }: { label: string; value: string }) {
