@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Landmark, FileText, Eye } from 'lucide-react';
+import { Landmark, FileText, Eye, Plus, X, FolderInput } from 'lucide-react';
 import Header from '../components/Header';
 import BankStatementDetails from './BankStatementDetails';
 
@@ -27,28 +27,39 @@ export default function BankStatements({
   const [bankStatements, setBankStatements] = useState<BankStatement[]>([]);
   const [selectedStatement, setSelectedStatement] = useState<BankStatement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+const [selectedFile, setSelectedFile] = useState<File | null>(null);
+const [uploadForm, setUploadForm] = useState({
+  name: '',
+  bankName: '',
+  accountNumber: '',
+  periodStart: '',
+  periodEnd: '',
+});
 
-  useEffect(() => {
-    const fetchBankStatements = async () => {
-      try {
-        const response = await fetch('/api/bank_statements');
-        const result = await response.json();
+  const fetchBankStatements = async () => {
+  try {
+    setIsLoading(true);
 
-        if (result.success) {
-          setBankStatements(result.bankStatements ?? []);
-        } else {
-          addToast('error', result.message || 'Kunne ikke hente bankutskrifter');
-        }
-      } catch (error) {
-        console.error('Feil ved henting av bankutskrifter:', error);
-        addToast('error', 'Kunne ikke kontakte serveren');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const response = await fetch('/api/bank_statements');
+    const result = await response.json();
 
-    fetchBankStatements();
-  }, [addToast]);
+    if (result.success) {
+      setBankStatements(result.bankStatements ?? []);
+    } else {
+      addToast('error', result.message || 'Kunne ikke hente bankutskrifter');
+    }
+  } catch (error) {
+    console.error('Feil ved henting av bankutskrifter:', error);
+    addToast('error', 'Kunne ikke kontakte serveren');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchBankStatements();
+}, []);
 
   const filteredStatements = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -84,6 +95,46 @@ export default function BankStatements({
     return `${formatDate(start)} – ${formatDate(end)}`;
   };
 
+  const handleUploadBankStatement = async () => {
+  if (!selectedFile) {
+    addToast('warning', 'Velg en PDF først');
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('document', selectedFile);
+    formData.append('name', uploadForm.name || selectedFile.name);
+
+    const response = await fetch('/api/last_opp_bank', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      addToast('success', 'Bankutskrift lastet opp');
+      setShowUploadModal(false);
+      setSelectedFile(null);
+      setUploadForm({
+        name: '',
+        bankName: '',
+        accountNumber: '',
+        periodStart: '',
+        periodEnd: '',
+      });
+      await fetchBankStatements();
+    } else {
+      addToast('error', result.message || 'Kunne ikke laste opp bankutskrift');
+    }
+  } catch (error) {
+    console.error(error);
+    addToast('error', 'Kunne ikke laste opp bankutskrift');
+  }
+};
+
+
         if (selectedStatement) {
 
   return (
@@ -112,6 +163,18 @@ export default function BankStatements({
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-center justify-between mb-6">
+          <button
+            type="button"
+            onClick={() => setShowUploadModal(true)}
+            className="h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2"
+            style={{
+              backgroundColor: 'var(--accent-yellow)',
+              color: '#0a0a0a',
+            }}
+          >
+            <Plus size={16} />
+            Last opp bankutskrift
+          </button>
           <div>
             <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
               Alle bankutskrifter
@@ -210,6 +273,103 @@ export default function BankStatements({
             ))}
           </div>
         )}
+
+        {showUploadModal && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center"
+    style={{ backgroundColor: 'rgba(0,0,0,0.65)' }}
+  >
+    <div
+      className="w-full max-w-lg rounded-2xl p-6"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
+      }}
+    >
+      <div className="flex items-center justify-between mb-5">
+        <h2
+          className="text-lg font-semibold"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          Last opp bankutskrift
+        </h2>
+
+        <button onClick={() => setShowUploadModal(false)}>
+          <X size={20} />
+        </button>
+      </div>
+
+      <label
+        className="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer mb-5"
+        style={{
+          borderColor: 'var(--border-color)',
+          color: 'var(--text-secondary)',
+        }}
+      >
+        <FolderInput size={36} className="mb-3" />
+
+        <span className="text-sm">
+          {selectedFile ? selectedFile.name : 'Klikk for å velge PDF'}
+        </span>
+
+        <input
+          hidden
+          type="file"
+          accept=".pdf"
+          onChange={(e) =>
+            setSelectedFile(e.target.files?.[0] ?? null)
+          }
+        />
+      </label>
+
+      <div className="space-y-3">
+
+          <input
+          value={uploadForm.name}
+          onChange={(e) =>
+            setUploadForm((p) => ({
+              ...p,
+              name: e.target.value,
+            }))
+          }
+          placeholder="Navn, valgfritt"
+          className="w-full h-10 rounded-lg px-3 text-sm outline-none"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
+        />
+
+
+      </div>
+
+      <div className="flex gap-3 mt-6">
+
+        <button
+          className="flex-1 h-10 rounded-lg"
+          onClick={() => setShowUploadModal(false)}
+        >
+          Avbryt
+        </button>
+
+        <button
+          className="flex-1 h-10 rounded-lg"
+          style={{
+            backgroundColor: 'var(--accent-yellow)',
+            color: '#000',
+          }}
+          onClick={handleUploadBankStatement}
+        >
+          Last opp
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+)}
+
       </div>
     </div>
   );
