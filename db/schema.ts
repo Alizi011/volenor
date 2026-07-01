@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   int,
+  tinyint,
   decimal,
 } from "drizzle-orm/mysql-core";
 
@@ -245,17 +246,25 @@ export const bankStatementAccounts = mysqlTable("bank_statement_accounts", {
 
   ownerName: varchar("ownerName", { length: 255 }),
 
-  includeSuggested: boolean("includeSuggested").default(true).notNull(),
+includeSuggested: tinyint("includeSuggested")
+  .default(1)
+  .notNull(),
 
-  matchedBankAccountId: int("matchedBankAccountId", {
-    unsigned: true,
-  }),
+matchedBankAccountId: int("matchedBankAccountId", {
+  unsigned: true,
+}),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type BankAccount = typeof bankAccounts.$inferSelect;
 export type InsertBankAccount = typeof bankAccounts.$inferInsert;
+
+export type BankStatementAccount =
+  typeof bankStatementAccounts.$inferSelect;
+
+export type InsertBankStatementAccount =
+  typeof bankStatementAccounts.$inferInsert;
 
 // Bank Transactions
 export const bankTransactions = mysqlTable("bank_transactions", {
@@ -276,6 +285,17 @@ export const bankTransactions = mysqlTable("bank_transactions", {
 
   matchedFinanceEntryId: int("matchedFinanceEntryId", { unsigned: true }),
   matchedDocumentId: int("matchedDocumentId", { unsigned: true }),
+
+  matchStatus: mysqlEnum("matchStatus", [
+  "unmatched",
+  "matched",
+  "possible",
+  "ignored",
+]).default("unmatched").notNull(),
+
+aiConfidence: int("aiConfidence", {
+  unsigned: true,
+}),
 
 merchant: varchar("merchant", { length: 255 }),
 category: varchar("category", { length: 100 }),
