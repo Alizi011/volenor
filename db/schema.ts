@@ -255,19 +255,24 @@ export const bankTransactions = mysqlTable("bank_transactions", {
   matchedFinanceEntryId: int("matchedFinanceEntryId", { unsigned: true }),
   matchedDocumentId: int("matchedDocumentId", { unsigned: true }),
 
-  matchStatus: mysqlEnum("matchStatus", [
-    "unmatched",
-    "matched",
-    "possible",
-    "ignored",
-  ]).default("unmatched").notNull(),
+merchant: varchar("merchant", { length: 255 }),
+category: varchar("category", { length: 100 }),
 
-  aiConfidence: int("aiConfidence", { unsigned: true }),
+cashflowType: mysqlEnum("cashflowType", [
+  "fixed_income",
+  "variable_income",
+  "fixed_expense",
+  "variable_expense",
+  "internal_transfer",
+  "private_transfer",
+  "saving_investment",
+  "one_time_income",
+  "one_time_expense",
+  "unknown",
+]).default("unknown").notNull(),
 
-  merchant: varchar("merchant", { length: 255 }),
-  category: varchar("category", { length: 100 }),
-  rawText: text("rawText"),
-  note: text("note"),
+rawText: text("rawText"),
+note: text("note"),
 
   receiptStatus: mysqlEnum("receiptStatus", [
     "none",

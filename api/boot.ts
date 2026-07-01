@@ -611,9 +611,10 @@ if (detectedAccountNumber) {
 }
 
 for (const tx of aiTransactionsPreview) {
-   if (matchedBankAccount && Number(matchedBankAccount.includeInAnalysis) === 0) {
+  if (matchedBankAccount && Number(matchedBankAccount.includeInAnalysis) === 0) {
     continue;
   }
+
   await getDb().execute(sql`
     INSERT INTO bank_transactions
     (
