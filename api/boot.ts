@@ -587,7 +587,33 @@ ${JSON.stringify(transactionsForAi, null, 2)}
   WHERE statementId = ${statement.id}
 `);
 
+const detectedAccountNumber =
+  aiStatementMetadata.accounts?.[0]?.accountNumber ?? null;
+
+let matchedBankAccount: any = null;
+
+if (detectedAccountNumber) {
+  const accountResult: any = await getDb().execute(sql`
+    SELECT *
+    FROM bank_accounts
+    WHERE householdId = ${statement.householdId}
+      AND accountNumber = ${detectedAccountNumber}
+    LIMIT 1
+  `);
+
+  const accountRows = Array.isArray(accountResult)
+    ? Array.isArray(accountResult[0])
+      ? accountResult[0]
+      : accountResult
+    : [];
+
+  matchedBankAccount = accountRows[0] ?? null;
+}
+
 for (const tx of aiTransactionsPreview) {
+   if (matchedBankAccount && Number(matchedBankAccount.includeInAnalysis) === 0) {
+    continue;
+  }
   await getDb().execute(sql`
     INSERT INTO bank_transactions
     (
@@ -612,8 +638,8 @@ for (const tx of aiTransactionsPreview) {
     (
       ${statement.id},
       ${statement.householdId},
-      ${statement.familyMemberId ?? null},
-      ${null},
+      ${matchedBankAccount?.familyMemberId ?? statement.familyMemberId ?? null},
+      ${matchedBankAccount?.id ?? null},
       ${tx.date},
       ${tx.description},
       ${tx.amount},
