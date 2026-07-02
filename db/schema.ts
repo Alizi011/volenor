@@ -276,7 +276,7 @@ export const bankTransactions = mysqlTable("bank_transactions", {
   bankAccountId: int("bankAccountId", { unsigned: true }),
 
   transactionDate: varchar("transactionDate", { length: 10 }).notNull(),
-  description: varchar("description", { length: 255 }).notNull(),
+  description: text("description").notNull(),
 
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   balance: decimal("balance", { precision: 12, scale: 2 }),
