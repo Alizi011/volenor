@@ -107,8 +107,14 @@ const saveAccountChanges = async () => {
         bankName: editForm.bankName || null,
         accountName: editForm.accountName || null,
         familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
-        ownerFamilyMemberId: editForm.ownerFamilyMemberId ? Number(editForm.ownerFamilyMemberId) : null,
-        accountHolderName: editForm.accountHolderName || null,
+        ownerFamilyMemberId:
+    editForm.ownerFamilyMemberId !== ''
+    ? Number(editForm.ownerFamilyMemberId)
+    : null,
+    accountHolderName:
+  editForm.accountHolderName.trim() !== ''
+    ? editForm.accountHolderName.trim()
+    : null,
         disposersJson: JSON.stringify(editForm.disposers),
         includeInAnalysis: editForm.includeInAnalysis,
       }),
