@@ -515,23 +515,21 @@ await getDb().execute(sql`
 `);
 
 for (const account of aiStatementMetadata.accounts ?? []) {
-  const existingSuggestionResult: any = await getDb().execute(sql`
+  const existingBankAccountResult: any = await getDb().execute(sql`
     SELECT id
-    FROM bank_statement_accounts
+    FROM bank_accounts
     WHERE householdId = ${statement.householdId}
       AND accountNumber = ${account.accountNumber}
     LIMIT 1
   `);
 
-  const existingSuggestionRows = Array.isArray(existingSuggestionResult)
-    ? Array.isArray(existingSuggestionResult[0])
-      ? existingSuggestionResult[0]
-      : existingSuggestionResult
+  const existingBankAccountRows = Array.isArray(existingBankAccountResult)
+    ? Array.isArray(existingBankAccountResult[0])
+      ? existingBankAccountResult[0]
+      : existingBankAccountResult
     : [];
 
-  if (existingSuggestionRows.length > 0) {
-    continue;
-  }
+  const matchedBankAccountId = existingBankAccountRows[0]?.id ?? null;
 
   await getDb().execute(sql`
     INSERT INTO bank_statement_accounts
@@ -541,7 +539,8 @@ for (const account of aiStatementMetadata.accounts ?? []) {
       accountNumber,
       accountName,
       ownerName,
-      includeSuggested
+      includeSuggested,
+      matchedBankAccountId
     )
     VALUES
     (
@@ -550,7 +549,8 @@ for (const account of aiStatementMetadata.accounts ?? []) {
       ${account.accountNumber},
       ${account.accountName ?? null},
       ${account.ownerName ?? null},
-      ${account.includeSuggested ? 1 : 0}
+      ${account.includeSuggested ? 1 : 0},
+      ${matchedBankAccountId}
     )
   `);
 }
