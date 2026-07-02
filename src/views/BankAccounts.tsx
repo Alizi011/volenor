@@ -130,13 +130,11 @@ const saveAccountChanges = async () => {
     ownerFamilyMemberId: editForm.ownerFamilyMemberId
       ? Number(editForm.ownerFamilyMemberId)
       : null,
-    accountHolderName: editForm.accountHolderName || null,
-    disposersJson: JSON.stringify(editForm.disposers ?? []),
-    includeInAnalysis: editForm.includeInAnalysis ? 1 : 0,
   });
 
       addToast('success', 'Bankkonto oppdatert');
       setEditingAccount(null);
+      window.location.reload();
     } else {
       addToast('error', result.message || 'Kunne ikke oppdatere bankkonto');
     }
