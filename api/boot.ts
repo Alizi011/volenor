@@ -928,7 +928,7 @@ app.put("/api/bank_accounts/:id", async (c) => {
         familyMemberId = ${body.familyMemberId ?? null},
         ownerFamilyMemberId = ${body.ownerFamilyMemberId ?? null},
         accountHolderName = ${body.accountHolderName ?? null},
-        disposersJson = ${JSON.stringify(body.disposers ?? [])},
+        disposersJson = ${body.disposersJson ?? JSON.stringify(body.disposers ?? [])},
         includeInAnalysis = ${body.includeInAnalysis ? 1 : 0}
       WHERE id = ${id}
     `);
