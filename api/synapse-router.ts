@@ -361,6 +361,10 @@ export const synapseRouter = createRouter({
           id: z.number(),
           data: z.object({
             familyMemberId: z.number().nullable().optional(),
+            ownerFamilyMemberId: z.number().nullable().optional(),
+            accountHolderName: z.string().nullable().optional(),
+            disposersJson: z.string().nullable().optional(),
+
             bankName: z.string().nullable().optional(),
             accountNumber: z.string().optional(),
             accountName: z.string().nullable().optional(),
