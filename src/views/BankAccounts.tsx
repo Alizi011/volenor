@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Landmark } from 'lucide-react';
+import { Plus, Trash2, Landmark, Edit2 } from 'lucide-react';
 import Header from '../components/Header';
 import { useSynapseBankAccounts, useSynapseFamily } from '../hooks/useSynapse';
 
@@ -17,6 +17,17 @@ export default function BankAccounts({ addToast }: BankAccountsProps) {
   const [familyMemberId, setFamilyMemberId] = useState<string>('');
   const [includeInAnalysis, setIncludeInAnalysis] = useState(true);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+
+  const [editingAccount, setEditingAccount] = useState<any | null>(null);
+    const [editForm, setEditForm] = useState({
+    bankName: '',
+    accountName: '',
+    familyMemberId: '',
+    ownerFamilyMemberId: '',
+    accountHolderName: '',
+    disposers: [] as string[],
+    includeInAnalysis: true,
+    });
 
 const createFromSuggestion = async (suggestion: any) => {
   const response = await fetch('/api/bank_accounts/from_suggestion', {
@@ -72,6 +83,7 @@ useEffect(() => {
       familyMemberId: familyMemberId ? Number(familyMemberId) : null,
       includeInAnalysis: includeInAnalysis ? 1 : 0,
     });
+    
 
     addToast('success', 'Bankkonto lagt til');
 
@@ -81,6 +93,47 @@ useEffect(() => {
     setFamilyMemberId('');
     setIncludeInAnalysis(true);
   };
+
+const saveAccountChanges = async () => {
+  if (!editingAccount) return;
+
+  try {
+    const response = await fetch(`/api/bank_accounts/${editingAccount.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bankName: editForm.bankName || null,
+        accountName: editForm.accountName || null,
+        familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
+        ownerFamilyMemberId: editForm.ownerFamilyMemberId ? Number(editForm.ownerFamilyMemberId) : null,
+        accountHolderName: editForm.accountHolderName || null,
+        disposers: editForm.disposers,
+        includeInAnalysis: editForm.includeInAnalysis,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      updateBankAccount(editingAccount.id, {
+        bankName: editForm.bankName || null,
+        accountName: editForm.accountName || null,
+        familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
+        includeInAnalysis: editForm.includeInAnalysis ? 1 : 0,
+      });
+
+      addToast('success', 'Bankkonto oppdatert');
+      setEditingAccount(null);
+    } else {
+      addToast('error', result.message || 'Kunne ikke oppdatere bankkonto');
+    }
+  } catch (error) {
+    console.error(error);
+    addToast('error', 'Kunne ikke kontakte serveren');
+  }
+};
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -290,6 +343,33 @@ useEffect(() => {
                     Ta med
                   </label>
 
+                   <button
+                    onClick={() => {
+                        let disposers: string[] = [];
+
+                        try {
+                        disposers = account.disposersJson ? JSON.parse(account.disposersJson) : [];
+                        } catch {
+                        disposers = [];
+                        }
+
+                        setEditingAccount(account);
+                        setEditForm({
+                        bankName: account.bankName ?? '',
+                        accountName: account.accountName ?? '',
+                        familyMemberId: account.familyMemberId ? String(account.familyMemberId) : '',
+                        ownerFamilyMemberId: account.ownerFamilyMemberId ? String(account.ownerFamilyMemberId) : '',
+                        accountHolderName: account.accountHolderName ?? '',
+                        disposers,
+                        includeInAnalysis: Number(account.includeInAnalysis) === 1,
+                        });
+                    }}
+                    className="p-2 rounded-lg"
+                    style={{ color: 'var(--text-secondary)' }}
+                    >
+                    <Edit2 size={16} />
+                    </button>
+                    
                   <button
                     onClick={() => {
                       deleteBankAccount(account.id);
@@ -305,7 +385,151 @@ useEffect(() => {
             })
           )}
         </div>
+
+        {editingAccount && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center"
+    style={{ backgroundColor: 'rgba(0,0,0,0.65)' }}
+    onClick={() => setEditingAccount(null)}
+  >
+    <div
+      className="w-full max-w-2xl rounded-xl p-6"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--text-primary)' }}>
+        Rediger bankkonto
+      </h2>
+
+      <div className="grid grid-cols-2 gap-4">
+        <input
+          value={editForm.bankName}
+          onChange={(e) => setEditForm((p) => ({ ...p, bankName: e.target.value }))}
+          placeholder="Bank"
+          className="h-10 rounded-lg px-3 text-sm outline-none"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
+        />
+
+        <input
+          value={editForm.accountName}
+          onChange={(e) => setEditForm((p) => ({ ...p, accountName: e.target.value }))}
+          placeholder="Kontonavn"
+          className="h-10 rounded-lg px-3 text-sm outline-none"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
+        />
+
+        <select
+          value={editForm.ownerFamilyMemberId}
+          onChange={(e) => setEditForm((p) => ({ ...p, ownerFamilyMemberId: e.target.value }))}
+          className="h-10 rounded-lg px-3 text-sm outline-none"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          <option value="">Juridisk eier / ikke valgt</option>
+          {members.map((m: any) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          value={editForm.accountHolderName}
+          onChange={(e) => setEditForm((p) => ({ ...p, accountHolderName: e.target.value }))}
+          placeholder="Kontoholder navn"
+          className="h-10 rounded-lg px-3 text-sm outline-none"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
+        />
+      </div>
+
+      <div className="mt-5">
+        <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+          Disponenter
+        </p>
+
+        <div className="grid grid-cols-2 gap-2">
+          {members.map((m: any) => {
+            const id = String(m.id);
+            const checked = editForm.disposers.includes(id);
+
+            return (
+              <label key={m.id} className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) =>
+                    setEditForm((p) => ({
+                      ...p,
+                      disposers: e.target.checked
+                        ? [...p.disposers, id]
+                        : p.disposers.filter((x) => x !== id),
+                    }))
+                  }
+                />
+                {m.name}
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <label className="flex items-center gap-2 mt-5 text-sm" style={{ color: 'var(--text-primary)' }}>
+        <input
+          type="checkbox"
+          checked={editForm.includeInAnalysis}
+          onChange={(e) => setEditForm((p) => ({ ...p, includeInAnalysis: e.target.checked }))}
+        />
+        Ta med i analyser
+      </label>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          type="button"
+          onClick={() => setEditingAccount(null)}
+          className="h-10 px-4 rounded-lg text-sm"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          Avbryt
+        </button>
+
+        <button
+          type="button"
+          onClick={saveAccountChanges}
+          className="h-10 px-5 rounded-lg text-sm font-medium"
+          style={{
+            backgroundColor: 'var(--accent-yellow)',
+            color: '#0a0a0a',
+          }}
+        >
+          Lagre
+        </button>
       </div>
     </div>
+  </div>
+)}
+      </div>
+    </div>
+    
   );
 }
