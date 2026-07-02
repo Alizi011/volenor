@@ -872,7 +872,7 @@ app.get("/api/bank_statement_accounts/suggestions", async (c) => {
         bs.bankName
       FROM bank_statement_accounts bsa
       LEFT JOIN bank_statements bs ON bs.id = bsa.statementId
-      WHERE bsa.matchedBankAccountId IS NULL
+      WHERE bsa.matchedBankAccountId IS NULL OR bsa.matchedBankAccountId = 0
       ORDER BY bsa.createdAt DESC
     `);
 
