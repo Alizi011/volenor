@@ -61,6 +61,11 @@ app.put("/api/documents/:id", async (c) => {
       SET
         name = ${body.name ?? ""},
         category = ${body.category ?? ""},
+          familyMemberId = ${
+    body.familyMemberId === undefined || body.familyMemberId === ""
+      ? null
+      : Number(body.familyMemberId)
+  },
         date = ${body.date ?? new Date().toISOString().slice(0, 10)},
         amount = ${amount},
         tags = ${tags},

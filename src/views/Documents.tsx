@@ -75,6 +75,7 @@ export default function Documents({
   const [editDocument, setEditDocument] = useState({
   name: '',
   category: '',
+  familyMemberId: '',
   date: '',
   amount: '',
   tags: '',
@@ -95,6 +96,7 @@ export default function Documents({
     uploadType: 'document',
   name: '',
   category: CATEGORIES[0]?.id ?? '',
+  familyMemberId: '',
   tags: '',
   notes: '',
   isFinancialDocument: false,
@@ -163,6 +165,7 @@ const openDocumentPreview = (doc: Document) => {
   setEditDocument({
     name: doc.name ?? '',
     category: doc.category ?? '',
+    familyMemberId: String((doc as any).familyMemberId ?? ''),
     date: doc.date ?? '',
     amount:
   (doc as any).amount !== null && (doc as any).amount !== undefined
@@ -189,6 +192,7 @@ const saveDocumentChanges = async () => {
       body: JSON.stringify({
         name: editDocument.name,
         category: editDocument.category,
+        familyMemberId: editDocument.familyMemberId || null,
         date: editDocument.date,
         amount: Number(editDocument.amount || 0),
         tags: editDocument.tags
@@ -271,6 +275,7 @@ window.location.reload();
     formData.append('document', selectedFile);
     formData.append('name', uploadForm.name);
     formData.append('category', uploadForm.category);
+    formData.append('familyMemberId', uploadForm.familyMemberId);
     formData.append('tags', uploadForm.tags);
     formData.append('notes', uploadForm.notes);
     formData.append('amount', uploadForm.amount);
@@ -327,6 +332,7 @@ const response = await fetch(endpoint, {
   uploadType: 'document',
   name: '',
           category: CATEGORIES[0]?.id ?? '',
+          familyMemberId: '',
           tags: '',
           notes: '',
           isFinancialDocument: false,
@@ -478,44 +484,8 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
           </button>
         </div>
 
-        <div className="mt-6">
-  <h3
-    className="text-xs font-semibold uppercase tracking-wider mb-3"
-    style={{ color: 'var(--text-secondary)' }}
-  >
-    Personer
-  </h3>
-
-  <div className="space-y-1">
-    <button
-      onClick={() => setSelectedFamilyMember(null)}
-      className="w-full text-left px-3 py-2 rounded-lg text-sm"
-      style={{
-        backgroundColor: selectedFamilyMember === null ? 'var(--bg-tertiary)' : 'transparent',
-        color: 'var(--text-primary)',
-      }}
-    >
-      Alle personer
-    </button>
-
-    {members.map((member: any) => (
-      <button
-        key={member.id}
-        onClick={() => setSelectedFamilyMember(String(member.id))}
-        className="w-full text-left px-3 py-2 rounded-lg text-sm"
-        style={{
-          backgroundColor:
-            selectedFamilyMember === String(member.id)
-              ? 'var(--bg-tertiary)'
-              : 'transparent',
-          color: 'var(--text-primary)',
-        }}
-      >
-        {member.name}
-      </button>
-    ))}
-  </div>
-</div>
+           
+       
 
         {/* File list */}
         <div className="flex-1 overflow-y-auto p-6">
@@ -580,6 +550,45 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
               </div>
             </div>
           </div>
+
+          <div
+  className="flex items-center gap-1 mb-5 px-1 py-1 rounded-xl w-fit"
+  style={{
+    backgroundColor: 'var(--bg-secondary)',
+    border: '1px solid var(--border-color)',
+  }}
+>
+  <button
+    onClick={() => setSelectedFamilyMember(null)}
+    className="px-4 py-2 rounded-lg text-xs font-medium transition-all"
+    style={{
+      backgroundColor: selectedFamilyMember === null ? 'var(--accent-yellow)' : 'transparent',
+      color: selectedFamilyMember === null ? '#0a0a0a' : 'var(--text-secondary)',
+    }}
+  >
+    Alle
+  </button>
+
+  {members.map((member: any) => (
+    <button
+      key={member.id}
+      onClick={() => setSelectedFamilyMember(String(member.id))}
+      className="px-4 py-2 rounded-lg text-xs font-medium transition-all"
+      style={{
+        backgroundColor:
+          selectedFamilyMember === String(member.id)
+            ? 'var(--accent-yellow)'
+            : 'transparent',
+        color:
+          selectedFamilyMember === String(member.id)
+            ? '#0a0a0a'
+            : 'var(--text-secondary)',
+      }}
+    >
+      {member.name}
+    </button>
+  ))}
+</div>
 
           {filteredDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
@@ -837,6 +846,31 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                       style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                     />
                   </div>
+
+
+<div>
+  <label className="block text-xs uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+    Person
+  </label>
+  <select
+    value={uploadForm.familyMemberId}
+    onChange={(e) => setUploadForm(prev => ({ ...prev, familyMemberId: e.target.value }))}
+    className="w-full h-11 rounded-lg px-3 text-sm outline-none appearance-none"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      border: '1px solid var(--border-color)',
+      color: 'var(--text-primary)',
+    }}
+  >
+    <option value="">Felles husholdning</option>
+    {members.map((member: any) => (
+      <option key={member.id} value={member.id}>
+        {member.name}
+      </option>
+    ))}
+  </select>
+</div>
+
 
 {uploadForm.uploadType === 'bank' && (
   <div
@@ -1348,6 +1382,39 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
                     ))}
                   </select>
                 </div>
+
+<div>
+  <label
+    className="text-xs uppercase tracking-wider font-medium"
+    style={{ color: 'var(--text-secondary)' }}
+  >
+          Person
+        </label>
+
+        <select
+          value={editDocument.familyMemberId}
+          onChange={(e) =>
+            setEditDocument(prev => ({
+              ...prev,
+              familyMemberId: e.target.value,
+            }))
+          }
+          className="mt-2 w-full h-10 rounded-lg px-3 text-sm outline-none"
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          <option value="">Felles husholdning</option>
+
+          {members.map((member: any) => (
+            <option key={member.id} value={member.id}>
+              {member.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
                   <div>
   <label className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--text-secondary)' }}>
