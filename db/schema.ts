@@ -224,12 +224,19 @@ export const bankAccounts = mysqlTable("bank_accounts", {
   id: id(),
   householdId: int("householdId", { unsigned: true }).notNull(),
   familyMemberId: int("familyMemberId", { unsigned: true }),
+
+  ownerFamilyMemberId: int("ownerFamilyMemberId", { unsigned: true }),
+  accountHolderName: varchar("accountHolderName", { length: 255 }),
+  disposersJson: text("disposersJson"),
+
   bankName: varchar("bankName", { length: 100 }),
   accountNumber: varchar("accountNumber", { length: 50 }).notNull(),
   accountName: varchar("accountName", { length: 255 }),
+
   includeInAnalysis: int("includeInAnalysis", { unsigned: true })
     .default(1)
     .notNull(),
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

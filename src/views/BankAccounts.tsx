@@ -123,12 +123,25 @@ const saveAccountChanges = async () => {
     const result = await response.json();
 
    if (result.success) {
-    updateBankAccount(editingAccount.id, {
-     bankName: editForm.bankName || null,
-    accountName: editForm.accountName || null,
-     familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
-    includeInAnalysis: editForm.includeInAnalysis ? 1 : 0,
-    });
+  updateBankAccount(editingAccount.id, {
+  bankName: editForm.bankName || null,
+  accountName: editForm.accountName || null,
+  familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
+
+  ownerFamilyMemberId:
+    editForm.ownerFamilyMemberId !== ''
+      ? Number(editForm.ownerFamilyMemberId)
+      : null,
+
+  accountHolderName:
+    editForm.accountHolderName.trim() !== ''
+      ? editForm.accountHolderName.trim()
+      : null,
+
+  disposersJson: JSON.stringify(editForm.disposers),
+
+  includeInAnalysis: editForm.includeInAnalysis ? 1 : 0,
+});
 
       addToast('success', 'Bankkonto oppdatert');
       setEditingAccount(null);
