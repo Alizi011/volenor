@@ -25,6 +25,7 @@ import type { Document, CustomCategory } from '../types';
 import { CATEGORIES, AVAILABLE_ICONS, AVAILABLE_COLORS, generateId } from '../data/demoData';
 import { getIcon } from '../lib/iconMap';
 import Header from '../components/Header';
+import { useSynapseFamily } from '../hooks/useSynapse';
 
 interface DocumentsProps {
   documents: Document[];
@@ -63,7 +64,9 @@ export default function Documents({
   addToast,
 }: DocumentsProps) {
   const allCategories = useAllCategories(customCategories);
+  const { members } = useSynapseFamily();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedFamilyMember, setSelectedFamilyMember] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +115,11 @@ export default function Documents({
     if (selectedCategory) {
       filtered = filtered.filter((d) => d.category === selectedCategory);
     }
+    if (selectedFamilyMember) {
+  filtered = filtered.filter(
+    (d: any) => String(d.familyMemberId ?? '') === selectedFamilyMember
+  );
+}
     if (filterType !== 'all') {
       filtered = filtered.filter((d) => d.type === filterType);
     }
@@ -125,7 +133,7 @@ export default function Documents({
       );
     }
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [documents, selectedCategory, filterType, searchQuery]);
+  }, [documents, selectedCategory, selectedFamilyMember, filterType, searchQuery]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -407,6 +415,9 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
               const count = categoryCounts[cat.id] || 0;
 
               return (
+
+                
+
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(isActive ? null : cat.id)}
@@ -466,6 +477,45 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
             <span className="text-sm">Ny kategori</span>
           </button>
         </div>
+
+        <div className="mt-6">
+  <h3
+    className="text-xs font-semibold uppercase tracking-wider mb-3"
+    style={{ color: 'var(--text-secondary)' }}
+  >
+    Personer
+  </h3>
+
+  <div className="space-y-1">
+    <button
+      onClick={() => setSelectedFamilyMember(null)}
+      className="w-full text-left px-3 py-2 rounded-lg text-sm"
+      style={{
+        backgroundColor: selectedFamilyMember === null ? 'var(--bg-tertiary)' : 'transparent',
+        color: 'var(--text-primary)',
+      }}
+    >
+      Alle personer
+    </button>
+
+    {members.map((member: any) => (
+      <button
+        key={member.id}
+        onClick={() => setSelectedFamilyMember(String(member.id))}
+        className="w-full text-left px-3 py-2 rounded-lg text-sm"
+        style={{
+          backgroundColor:
+            selectedFamilyMember === String(member.id)
+              ? 'var(--bg-tertiary)'
+              : 'transparent',
+          color: 'var(--text-primary)',
+        }}
+      >
+        {member.name}
+      </button>
+    ))}
+  </div>
+</div>
 
         {/* File list */}
         <div className="flex-1 overflow-y-auto p-6">

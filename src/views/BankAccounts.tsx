@@ -322,8 +322,7 @@ const saveAccountChanges = async () => {
             </p>
           ) : (
             bankAccounts.map((account: any) => {
-              const member = members.find((m: any) => Number(m.id) === Number(account.familyMemberId));
-
+              const member = members.find((m: any) => Number(m.id) === Number(account.ownerFamilyMemberId));
               return (
                 <div
                   key={account.id}
