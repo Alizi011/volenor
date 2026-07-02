@@ -107,6 +107,7 @@ const saveAccountChanges = async () => {
       body: JSON.stringify({
         bankName: editForm.bankName || null,
         accountName: editForm.accountName || null,
+        accountType: editForm.accountType || null,
         familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
         ownerFamilyMemberId:
     editForm.ownerFamilyMemberId !== ''
@@ -127,6 +128,7 @@ const saveAccountChanges = async () => {
   updateBankAccount(editingAccount.id, {
   bankName: editForm.bankName || null,
   accountName: editForm.accountName || null,
+  accountType: editForm.accountType || null,
   familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
 
   ownerFamilyMemberId:

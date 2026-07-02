@@ -45,6 +45,7 @@ const fmtBankAccount = (d: any) => ({
   bankName: d.bankName ?? '',
   accountNumber: d.accountNumber ?? '',
   accountName: d.accountName ?? '',
+  accountType: d.accountType ?? '',
   includeInAnalysis: Number(d.includeInAnalysis ?? 1),
 });
 const fmtFamily = (d: any) => ({ ...d, id: safeId(d.id), notes: d.notes ?? '' });

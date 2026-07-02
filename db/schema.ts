@@ -232,6 +232,7 @@ export const bankAccounts = mysqlTable("bank_accounts", {
   bankName: varchar("bankName", { length: 100 }),
   accountNumber: varchar("accountNumber", { length: 50 }).notNull(),
   accountName: varchar("accountName", { length: 255 }),
+  accountType: varchar("accountType", { length: 50 }),
 
   includeInAnalysis: int("includeInAnalysis", { unsigned: true })
     .default(1)

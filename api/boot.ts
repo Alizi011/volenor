@@ -925,6 +925,7 @@ app.put("/api/bank_accounts/:id", async (c) => {
       SET
         bankName = ${body.bankName ?? null},
         accountName = ${body.accountName ?? null},
+        accountType = ${body.accountType ?? null},
         familyMemberId = ${body.familyMemberId ?? null},
         ownerFamilyMemberId = ${body.ownerFamilyMemberId ?? null},
         accountHolderName = ${body.accountHolderName ?? null},
