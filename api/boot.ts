@@ -552,6 +552,12 @@ for (const account of aiStatementMetadata.accounts ?? []) {
       ${account.includeSuggested ? 1 : 0},
       ${matchedBankAccountId}
     )
+    ON DUPLICATE KEY UPDATE
+      statementId = VALUES(statementId),
+      accountName = VALUES(accountName),
+      ownerName = VALUES(ownerName),
+      includeSuggested = VALUES(includeSuggested),
+      matchedBankAccountId = VALUES(matchedBankAccountId)
   `);
 }
 
