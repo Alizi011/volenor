@@ -920,6 +920,8 @@ app.put("/api/bank_accounts/:id", async (c) => {
     const id = Number(c.req.param("id"));
     const body = await c.req.json();
 
+    console.log("BANK ACCOUNT UPDATE BODY:", body);
+
     await getDb().execute(sql`
       UPDATE bank_accounts
       SET

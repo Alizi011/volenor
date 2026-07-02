@@ -134,7 +134,6 @@ const saveAccountChanges = async () => {
 
       addToast('success', 'Bankkonto oppdatert');
       setEditingAccount(null);
-      window.location.reload();
     } else {
       addToast('error', result.message || 'Kunne ikke oppdatere bankkonto');
     }
