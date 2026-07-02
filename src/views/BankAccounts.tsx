@@ -25,6 +25,7 @@ export default function BankAccounts({ addToast }: BankAccountsProps) {
     familyMemberId: '',
     ownerFamilyMemberId: '',
     accountHolderName: '',
+    accountType: '',
     disposers: [] as string[],
     includeInAnalysis: true,
     });
@@ -379,6 +380,7 @@ const saveAccountChanges = async () => {
                         familyMemberId: account.familyMemberId ? String(account.familyMemberId) : '',
                         ownerFamilyMemberId: account.ownerFamilyMemberId ? String(account.ownerFamilyMemberId) : '',
                         accountHolderName: account.accountHolderName ?? '',
+                        accountType: account.accountType ?? '',
                         disposers,
                         includeInAnalysis: Number(account.includeInAnalysis) === 1,
                         });
@@ -466,18 +468,44 @@ const saveAccountChanges = async () => {
           ))}
         </select>
 
-        <input
-          value={editForm.accountHolderName}
-          onChange={(e) => setEditForm((p) => ({ ...p, accountHolderName: e.target.value }))}
-          placeholder="Kontoholder navn"
-          className="h-10 rounded-lg px-3 text-sm outline-none"
-          style={{
-            backgroundColor: 'var(--bg-tertiary)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-primary)',
-          }}
-        />
-      </div>
+{/*
+<input
+  value={editForm.accountHolderName}
+  onChange={(e) => setEditForm((p) => ({ ...p, accountHolderName: e.target.value }))}
+  placeholder="Kontoholder navn"
+  className="h-10 rounded-lg px-3 text-sm outline-none"
+  style={{
+    backgroundColor: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-primary)',
+  }}
+/>
+*/}
+
+<select
+  value={editForm.accountType}
+  onChange={(e) => setEditForm((p) => ({ ...p, accountType: e.target.value }))}
+  className="h-10 rounded-lg px-3 text-sm outline-none"
+  style={{
+    backgroundColor: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-primary)',
+  }}
+>
+  <option value="">Kontotype / ikke valgt</option>
+  <option value="brukskonto">Brukskonto</option>
+  <option value="sparekonto">Sparekonto</option>
+  <option value="bufferkonto">Bufferkonto</option>
+  <option value="lønnskonto">Lønnskonto</option>
+  <option value="regningskonto">Regningskonto</option>
+  <option value="kredittkort">Kredittkort</option>
+  <option value="investering">Investering</option>
+  <option value="lånekonto">Lånekonto</option>
+  <option value="valutakonto">Valutakonto</option>
+  <option value="annet">Annet</option>
+</select>
+
+</div>
 
       <div className="mt-5">
         <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
