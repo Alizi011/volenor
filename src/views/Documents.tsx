@@ -558,16 +558,6 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
     border: '1px solid var(--border-color)',
   }}
 >
-  <button
-    onClick={() => setSelectedFamilyMember(null)}
-    className="px-4 py-2 rounded-lg text-xs font-medium transition-all"
-    style={{
-      backgroundColor: selectedFamilyMember === null ? 'var(--accent-yellow)' : 'transparent',
-      color: selectedFamilyMember === null ? '#0a0a0a' : 'var(--text-secondary)',
-    }}
-  >
-    Alle
-  </button>
 
   {members.map((member: any) => (
     <button
@@ -587,7 +577,10 @@ const CategoryIcon = ({ name, color, size = 18 }: { name: string; color: string;
     >
       {member.name}
     </button>
+    
   ))}
+
+  
 </div>
 
           {filteredDocs.length === 0 ? (

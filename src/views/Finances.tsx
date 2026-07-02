@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { FinanceEntry, Budget, CategoryConfig } from '../types';
 import Header from '../components/Header';
+import FinanceBills from './FinanceBills';
 
 interface FinancesProps {
   finances: FinanceEntry[];
@@ -54,6 +55,7 @@ export default function Finances({
     return new Date().toISOString().slice(0, 7);
   });
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  const [financeView, setFinanceView] = useState<'overview' | 'bills'>('overview');
 
   // Form state
   const [newTitle, setNewTitle] = useState('');
@@ -84,6 +86,7 @@ export default function Finances({
       .reduce((sum, f) => sum + f.amount, 0);
     return { income, expenses, balance: income - expenses, pendingExpenses, overdueExpenses, count: monthEntries.length };
   }, [finances, selectedMonth]);
+
 
   // Previous month comparison
   const prevMonthStats = useMemo(() => {
@@ -235,6 +238,31 @@ export default function Finances({
             Ny transaksjon
           </button>
         </div>
+
+       {/* Finance view tabs */}
+<div className="flex gap-2 mb-6">
+  {([
+    { value: 'overview', label: 'Oversikt' },
+    { value: 'bills', label: 'Regninger & krav' },
+  ] as const).map((tab) => (
+    <button
+      key={tab.value}
+      onClick={() => setFinanceView(tab.value)}
+      className="px-4 py-2 rounded-lg text-sm font-medium"
+      style={{
+        backgroundColor: financeView === tab.value ? 'var(--accent-yellow)' : 'var(--bg-secondary)',
+        color: financeView === tab.value ? '#0a0a0a' : 'var(--text-secondary)',
+        border: '1px solid var(--border-color)',
+      }}
+    >
+      {tab.label}
+    </button>
+  ))}
+</div>
+
+{financeView === 'bills' && (
+  <FinanceBills finances={finances} />
+)}
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -564,10 +592,12 @@ export default function Finances({
               })}
             </div>
           )}
+
         </motion.div>
       </div>
+     
 
-      {/* New entry modal */}
+        /* New entry modal */
       <AnimatePresence>
         {showNewEntry && (
           <>
