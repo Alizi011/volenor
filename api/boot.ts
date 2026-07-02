@@ -915,6 +915,39 @@ app.get("/api/bank_statement_accounts/suggestions", async (c) => {
   }
 });
 
+app.put("/api/bank_accounts/:id", async (c) => {
+  try {
+    const id = Number(c.req.param("id"));
+    const body = await c.req.json();
+
+    await getDb().execute(sql`
+      UPDATE bank_accounts
+      SET
+        bankName = ${body.bankName ?? null},
+        accountName = ${body.accountName ?? null},
+        familyMemberId = ${body.familyMemberId ?? null},
+        ownerFamilyMemberId = ${body.ownerFamilyMemberId ?? null},
+        accountHolderName = ${body.accountHolderName ?? null},
+        disposersJson = ${JSON.stringify(body.disposers ?? [])},
+        includeInAnalysis = ${body.includeInAnalysis ? 1 : 0}
+      WHERE id = ${id}
+    `);
+
+    return c.json({
+      success: true,
+      message: "Bankkonto oppdatert",
+    });
+  } catch (error: any) {
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
 app.post("/api/bank_accounts/from_suggestion", async (c) => {
   try {
     const body = await c.req.json();
