@@ -515,6 +515,24 @@ await getDb().execute(sql`
 `);
 
 for (const account of aiStatementMetadata.accounts ?? []) {
+  const existingSuggestionResult: any = await getDb().execute(sql`
+    SELECT id
+    FROM bank_statement_accounts
+    WHERE householdId = ${statement.householdId}
+      AND accountNumber = ${account.accountNumber}
+    LIMIT 1
+  `);
+
+  const existingSuggestionRows = Array.isArray(existingSuggestionResult)
+    ? Array.isArray(existingSuggestionResult[0])
+      ? existingSuggestionResult[0]
+      : existingSuggestionResult
+    : [];
+
+  if (existingSuggestionRows.length > 0) {
+    continue;
+  }
+
   await getDb().execute(sql`
     INSERT INTO bank_statement_accounts
     (
