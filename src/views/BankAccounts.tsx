@@ -44,13 +44,13 @@ const createFromSuggestion = async (suggestion: any) => {
 
   const result = await response.json();
 
-  if (result.success) {
-    addToast('success', 'Bankkonto opprettet fra AI-forslag');
-    await fetchSuggestions();
-    window.location.reload();
-  } else {
-    addToast('error', result.message || 'Kunne ikke opprette bankkonto');
-  }
+if (result.success) {
+  addToast('success', 'Bankkonto oppdatert');
+  setEditingAccount(null);
+  window.location.reload();
+} else {
+  addToast('error', result.message || 'Kunne ikke oppdatere bankkonto');
+}
 };
 
 const fetchSuggestions = async () => {
@@ -123,14 +123,12 @@ const saveAccountChanges = async () => {
     const result = await response.json();
 
    if (result.success) {
-  updateBankAccount(editingAccount.id, {
-    bankName: editForm.bankName || null,
+    updateBankAccount(editingAccount.id, {
+     bankName: editForm.bankName || null,
     accountName: editForm.accountName || null,
-    familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
-    ownerFamilyMemberId: editForm.ownerFamilyMemberId
-      ? Number(editForm.ownerFamilyMemberId)
-      : null,
-  });
+     familyMemberId: editForm.familyMemberId ? Number(editForm.familyMemberId) : null,
+    includeInAnalysis: editForm.includeInAnalysis ? 1 : 0,
+    });
 
       addToast('success', 'Bankkonto oppdatert');
       setEditingAccount(null);
