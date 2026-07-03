@@ -266,13 +266,17 @@ export default function Finances({
   ))}
 </div>
 
-<FinanceBills
-  finances={finances}
-  financialItems={financialItems}
-  onAddFinancialItem={onAddFinancialItem}
-  onMarkFinancialItemAsPaid={onMarkFinancialItemAsPaid}
-/>
+{financeView === 'bills' && (
+  <FinanceBills
+    finances={finances}
+    financialItems={financialItems}
+    onAddFinancialItem={onAddFinancialItem}
+    onMarkFinancialItemAsPaid={onMarkFinancialItemAsPaid}
+  />
+)}
   
+  {financeView === 'overview' && (
+  <>
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -603,7 +607,10 @@ export default function Finances({
             </div>
           )}
 
-        </motion.div>
+          </motion.div>
+
+      </>
+    )}
       </div>
      
 
