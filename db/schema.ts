@@ -200,6 +200,121 @@ export const financeEntries = mysqlTable("finance_entries", {
 export type FinanceEntry = typeof financeEntries.$inferSelect;
 export type InsertFinanceEntry = typeof financeEntries.$inferInsert;
 
+// Financial Items
+export const financialItems = mysqlTable("financial_items", {
+  id: id(),
+
+  householdId: int("householdId", { unsigned: true }).notNull(),
+  familyMemberId: int("familyMemberId", { unsigned: true }),
+
+  documentId: int("documentId", { unsigned: true }),
+  financeEntryId: int("financeEntryId", { unsigned: true }),
+  debtCaseId: int("debtCaseId", { unsigned: true }),
+
+  title: varchar("title", { length: 255 }).notNull(),
+
+  type: mysqlEnum("type", [
+    "invoice",
+    "reminder",
+    "debt_collection",
+    "bailiff",
+    "loan",
+    "subscription",
+    "insurance",
+    "tax",
+    "other",
+  ]).default("invoice").notNull(),
+
+  status: mysqlEnum("status", [
+    "draft",
+    "pending_approval",
+    "active",
+    "unpaid",
+    "overdue",
+    "reminder",
+    "collection_notice",
+    "debt_collection",
+    "bailiff",
+    "payment_plan",
+    "paid",
+    "closed",
+    "disputed",
+    "archived",
+  ]).default("pending_approval").notNull(),
+
+  creditorName: varchar("creditorName", { length: 255 }),
+  collectorName: varchar("collectorName", { length: 255 }),
+
+  originalAmount: decimal("originalAmount", { precision: 12, scale: 2 }),
+  currentAmount: decimal("currentAmount", { precision: 12, scale: 2 }),
+
+  currency: varchar("currency", { length: 10 }).default("NOK"),
+
+  invoiceNumber: varchar("invoiceNumber", { length: 100 }),
+  kidNumber: varchar("kidNumber", { length: 100 }),
+  accountNumber: varchar("accountNumber", { length: 50 }),
+  referenceNumber: varchar("referenceNumber", { length: 100 }),
+
+  category: varchar("category", { length: 100 }),
+
+  issueDate: varchar("issueDate", { length: 10 }),
+  dueDate: varchar("dueDate", { length: 10 }),
+  paidDate: varchar("paidDate", { length: 10 }),
+
+  notes: text("notes"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type FinancialItem = typeof financialItems.$inferSelect;
+export type InsertFinancialItem = typeof financialItems.$inferInsert;
+
+// Financial Events
+export const financialEvents = mysqlTable("financial_events", {
+  id: id(),
+
+  householdId: int("householdId", { unsigned: true }).notNull(),
+  financialItemId: int("financialItemId", { unsigned: true }).notNull(),
+
+  documentId: int("documentId", { unsigned: true }),
+  financeEntryId: int("financeEntryId", { unsigned: true }),
+  debtCaseId: int("debtCaseId", { unsigned: true }),
+
+  eventType: mysqlEnum("eventType", [
+    "document_received",
+    "ai_analyzed",
+    "user_approved",
+    "invoice_created",
+    "due_date",
+    "reminder_created",
+    "overdue",
+    "reminder_received",
+    "collection_notice_received",
+    "debt_collection_created",
+    "bailiff_notice_received",
+    "payment_registered",
+    "fee_added",
+    "interest_added",
+    "note_added",
+    "status_changed",
+    "closed",
+  ]).notNull(),
+
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+
+  amountChange: decimal("amountChange", { precision: 12, scale: 2 }),
+
+  eventDate: varchar("eventDate", { length: 10 }).notNull(),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FinancialEvent = typeof financialEvents.$inferSelect;
+export type InsertFinancialEvent = typeof financialEvents.$inferInsert;
+
+
 // Bank Statements
 export const bankStatements = mysqlTable("bank_statements", {
   id: id(),

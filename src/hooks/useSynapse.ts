@@ -211,6 +211,27 @@ export function useSynapseBankAccounts() {
   };
 }
 
+export function useSynapseFinancialItems() {
+  const utils = trpc.useUtils();
+
+  const { data, isLoading } = trpc.synapse.financialItems.list.useQuery();
+
+  const create = trpc.synapse.financialItems.create.useMutation({
+    onSuccess: () => utils.synapse.financialItems.list.invalidate(),
+  });
+
+  const markAsPaid = trpc.synapse.financialItems.markAsPaid.useMutation({
+    onSuccess: () => utils.synapse.financialItems.list.invalidate(),
+  });
+
+  return {
+    financialItems: (data ?? []).filter((d: any) => d.id != null),
+    isLoading,
+    addFinancialItem: create.mutateAsync,
+    markFinancialItemAsPaid: markAsPaid.mutateAsync,
+  };
+}
+
 export function useSynapseBudgets() {
   const utils = trpc.useUtils();
   const { data } = trpc.synapse.budgets.list.useQuery();

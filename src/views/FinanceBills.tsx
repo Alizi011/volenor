@@ -9,6 +9,9 @@ import type { FinanceEntry } from '../types';
 
 interface FinanceBillsProps {
   finances: FinanceEntry[];
+  financialItems: any[];
+  onAddFinancialItem: (item: any) => void | Promise<any>;
+  onMarkFinancialItemAsPaid: (input: { id: number; amount?: number | null }) => void;
 }
 
 const STATUS_CONFIG = {
@@ -17,7 +20,13 @@ const STATUS_CONFIG = {
   overdue: { label: 'Forfalt', color: 'var(--accent-red)', icon: AlertTriangle },
 };
 
-export default function FinanceBills({ finances }: FinanceBillsProps) {
+export default function FinanceBills({
+  finances,
+  financialItems,
+  onAddFinancialItem,
+  onMarkFinancialItemAsPaid,
+}: FinanceBillsProps) {
+
   const billStats = useMemo(() => {
     const billEntries = finances.filter(
       (f) =>
@@ -62,6 +71,31 @@ export default function FinanceBills({ finances }: FinanceBillsProps) {
 
   return (
     <div className="space-y-6">
+
+        <button
+  onClick={async () => {
+    await onAddFinancialItem({
+      title: 'Testregning Volenor',
+      type: 'invoice',
+      status: 'unpaid',
+      creditorName: 'Testleverandør AS',
+      originalAmount: 1290,
+      currentAmount: 1290,
+      currency: 'NOK',
+      category: 'Test',
+      dueDate: new Date().toISOString().slice(0, 10),
+      notes: 'Opprettet som test fra FinanceBills',
+    });
+  }}
+  className="h-10 px-4 rounded-lg text-sm font-medium"
+  style={{
+    backgroundColor: 'var(--accent-yellow)',
+    color: '#0a0a0a',
+  }}
+>
+  Opprett testregning
+</button>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           {

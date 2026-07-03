@@ -18,7 +18,10 @@ import {
   familyMembers,
   customCategories,
   userSettings,
+  financialItems,
+  financialEvents,
 } from "@db/schema";
+import { financialEngine } from "./services/financial-engine";
 
 const db = () => getDb();
 
@@ -295,6 +298,7 @@ export const synapseRouter = createRouter({
           recurringInterval: z.string().optional(),
           familyMemberId: z.number().optional(),
         }),
+
       )
       .mutation(async ({ ctx, input }) => {
         const householdId = await getHouseholdIdForUser(ctx.user.id);
@@ -315,6 +319,105 @@ export const synapseRouter = createRouter({
       await db().delete(financeEntries).where(eq(financeEntries.id, input.id));
       return { success: true };
     }),
+  }),
+
+  financialItems: createRouter({
+    list: authedQuery.query(async ({ ctx }) => {
+      const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+      return financialEngine.listFinancialItems(householdId);
+    }),
+
+    create: authedQuery
+      .input(
+        z.object({
+          familyMemberId: z.number().nullable().optional(),
+          documentId: z.number().nullable().optional(),
+          financeEntryId: z.number().nullable().optional(),
+          debtCaseId: z.number().nullable().optional(),
+
+          title: z.string(),
+          type: z.enum([
+            "invoice",
+            "reminder",
+            "debt_collection",
+            "bailiff",
+            "loan",
+            "subscription",
+            "insurance",
+            "tax",
+            "other",
+          ]).optional(),
+
+          status: z.enum([
+            "draft",
+            "pending_approval",
+            "active",
+            "unpaid",
+            "overdue",
+            "reminder",
+            "collection_notice",
+            "debt_collection",
+            "bailiff",
+            "payment_plan",
+            "paid",
+            "closed",
+            "disputed",
+            "archived",
+          ]).optional(),
+
+          creditorName: z.string().nullable().optional(),
+          collectorName: z.string().nullable().optional(),
+
+          originalAmount: z.number().nullable().optional(),
+          currentAmount: z.number().nullable().optional(),
+
+          currency: z.string().optional(),
+
+          invoiceNumber: z.string().nullable().optional(),
+          kidNumber: z.string().nullable().optional(),
+          accountNumber: z.string().nullable().optional(),
+          referenceNumber: z.string().nullable().optional(),
+          category: z.string().nullable().optional(),
+
+          issueDate: z.string().nullable().optional(),
+          dueDate: z.string().nullable().optional(),
+          paidDate: z.string().nullable().optional(),
+
+          notes: z.string().nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+        return financialEngine.createFinancialItem({
+          ...input,
+          householdId,
+        });
+      }),
+
+    markAsPaid: authedQuery
+      .input(
+        z.object({
+          id: z.number(),
+          amount: z.number().nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+        return financialEngine.markAsPaid(
+          householdId,
+          input.id,
+          input.amount ?? null,
+        );
+      }),
+
+    events: authedQuery
+      .input(z.object({ financialItemId: z.number() }))
+      .query(async ({ input }) => {
+        return financialEngine.listEvents(input.financialItemId);
+      }),
   }),
 
     bankAccounts: createRouter({

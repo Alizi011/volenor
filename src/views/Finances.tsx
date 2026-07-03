@@ -23,12 +23,15 @@ interface FinancesProps {
   finances: FinanceEntry[];
   budgets: Budget[];
   categories: CategoryConfig[];
+  financialItems: any[];
   onAddFinance: (entry: FinanceEntry) => void;
   onUpdateFinance: (id: string, updates: Partial<FinanceEntry>) => void;
   onDeleteFinance: (id: string) => void;
   onAddBudget: (budget: Budget) => void;
+  onAddFinancialItem: (item: any) => void;
   onUpdateBudget: (id: string, updates: Partial<Budget>) => void;
   addToast: (type: 'success' | 'info' | 'warning' | 'error', message: string) => void;
+  onMarkFinancialItemAsPaid: (input: { id: number; amount?: number | null }) => void;
 }
 
 const STATUS_CONFIG = {
@@ -44,9 +47,12 @@ const FINANCE_CATEGORIES: CategoryConfig[] = [
 
 export default function Finances({
   finances,
+  financialItems,
   budgets,
   categories,
   onAddFinance,
+  onAddFinancialItem,
+  onMarkFinancialItemAsPaid,
   onDeleteFinance,
   addToast,
 }: FinancesProps) {
@@ -260,9 +266,13 @@ export default function Finances({
   ))}
 </div>
 
-{financeView === 'bills' && (
-  <FinanceBills finances={finances} />
-)}
+<FinanceBills
+  finances={finances}
+  financialItems={financialItems}
+  onAddFinancialItem={onAddFinancialItem}
+  onMarkFinancialItemAsPaid={onMarkFinancialItemAsPaid}
+/>
+  
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

@@ -10,6 +10,7 @@ import {
   useSynapseTasks,
   useSynapseInbox,
   useSynapseFinances,
+  useSynapseFinancialItems,
   useSynapseBudgets,
   useSynapseDebtCases,
   useSynapseDebtNotes,
@@ -49,6 +50,11 @@ function MainApp() {
   const { tasks, addTask, updateTask, deleteTask } = useSynapseTasks();
   const { inbox, addInboxItem, removeInboxItem } = useSynapseInbox();
   const { finances, addFinance, deleteFinance } = useSynapseFinances();
+  const {
+  financialItems,
+  addFinancialItem,
+  markFinancialItemAsPaid,
+} = useSynapseFinancialItems();
   const { budgets, addBudget } = useSynapseBudgets();
   const { cases: debtCases, addCase, updateCase, deleteCase, closeCase } = useSynapseDebtCases();
   const { members, addMember, deleteMember } = useSynapseFamily();
@@ -204,15 +210,18 @@ function MainApp() {
           )}
             {currentView === 'finances' && (
               <Finances
-                finances={finances}
-                budgets={budgets}
-                categories={[...CATEGORIES]}
-                onAddFinance={addFinance}
-                onUpdateFinance={(_id: string, _data: any) => {}}
-                onDeleteFinance={deleteFinance}
-               onAddBudget={addBudget}
-                onUpdateBudget={(_id: string, _data: any) => {}}
-                addToast={addToast}
+                 finances={finances}
+              financialItems={financialItems}
+              budgets={budgets}
+              categories={[...CATEGORIES]}
+              onAddFinance={addFinance}
+              onAddFinancialItem={addFinancialItem}
+              onMarkFinancialItemAsPaid={markFinancialItemAsPaid}
+              onUpdateFinance={(_id: string, _data: any) => {}}
+              onDeleteFinance={deleteFinance}
+              onAddBudget={addBudget}
+              onUpdateBudget={(_id: string, _data: any) => {}}
+              addToast={addToast}
               />
             )}
 
