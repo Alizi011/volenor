@@ -181,6 +181,90 @@ if (shouldCreateFinanceEntry) {
         ${notes}
       )
     `);
+
+        // Opprett også FinancialItem i den nye økonomimotoren
+    const financialStatus = isPaid === 1 ? "paid" : "unpaid";
+    const financialItemType = "invoice";
+
+    await getDb().execute(sql`
+      INSERT INTO financial_items
+      (
+        householdId,
+        familyMemberId,
+        documentId,
+        financeEntryId,
+        title,
+        type,
+        status,
+        creditorName,
+        originalAmount,
+        currentAmount,
+        currency,
+        category,
+        dueDate,
+        paidDate,
+        notes
+      )
+      VALUES (
+        ${householdId},
+        ${familyMemberId},
+        ${documentId},
+        null,
+        ${name},
+        ${financialItemType},
+        ${financialStatus},
+        ${name},
+        ${amount},
+        ${isPaid === 1 ? 0 : amount},
+        ${"NOK"},
+        ${financialCategory || category},
+        ${dueDate},
+        ${isPaid === 1 ? dateStr : null},
+        ${notes}
+      )
+    `);
+
+    const financialRows: any = await getDb().execute(sql`
+      SELECT id FROM financial_items
+      WHERE documentId = ${documentId}
+      ORDER BY id DESC
+      LIMIT 1
+    `);
+
+    const financialResultRows = Array.isArray(financialRows)
+      ? Array.isArray(financialRows[0])
+        ? financialRows[0]
+        : financialRows
+      : [];
+
+    const financialItemId = financialResultRows[0]?.id;
+
+    if (financialItemId) {
+      await getDb().execute(sql`
+        INSERT INTO financial_events
+        (
+          householdId,
+          financialItemId,
+          documentId,
+          eventType,
+          title,
+          description,
+          amountChange,
+          eventDate
+        )
+        VALUES (
+          ${householdId},
+          ${financialItemId},
+          ${documentId},
+          ${"invoice_created"},
+          ${"Regning opprettet fra dokument"},
+          ${name},
+          ${amount},
+          ${dateStr}
+        )
+      `);
+    }
+
   } else {
     console.log("FINANCE: fant ikke documentId, økonomipost ble ikke opprettet");
   }
