@@ -51,7 +51,6 @@ export default function Finances({
   budgets,
   categories,
   onAddFinance,
-  onAddFinancialItem,
   onMarkFinancialItemAsPaid,
   onDeleteFinance,
   addToast,
@@ -270,7 +269,6 @@ export default function Finances({
   <FinanceBills
     finances={finances}
     financialItems={financialItems}
-    onAddFinancialItem={onAddFinancialItem}
     onMarkFinancialItemAsPaid={onMarkFinancialItemAsPaid}
   />
 )}
