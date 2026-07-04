@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { simpleParser } from "mailparser";
+import { createInboxDocumentPackage } from "./mail/importer";
 
 export const mailGatewayRouter = new Hono();
 
@@ -71,4 +72,114 @@ mailGatewayRouter.get("/api/mail_gateway/parse_first", async (c) => {
   } catch (error: any) {
     return c.json({ success: false, message: error.message }, 500);
   }
+
+  mailGatewayRouter.post("/api/mail_gateway/import_first", async (c) => {
+  try {
+    const maildirNew = "/root/Maildir/new";
+    const processedDir = "/root/Maildir/processed";
+
+    if (!fs.existsSync(maildirNew)) {
+      return c.json({ success: false, message: "Maildir finnes ikke" }, 404);
+    }
+
+    if (!fs.existsSync(processedDir)) {
+      fs.mkdirSync(processedDir, { recursive: true });
+    }
+
+    const files = fs.readdirSync(maildirNew);
+
+    if (files.length === 0) {
+      return c.json({ success: false, message: "Ingen e-poster funnet" }, 404);
+    }
+
+    const mailFileName = files[0];
+    const mailFilePath = path.join(maildirNew, mailFileName);
+    const parsed = await simpleParser(fs.readFileSync(mailFilePath));
+
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+
+    const attachments = parsed.attachments.filter((a) =>
+      allowedTypes.includes(a.contentType)
+    );
+
+    if (attachments.length === 0) {
+      return c.json(
+        {
+          success: false,
+          message: "E-posten har ingen støttede vedlegg",
+          subject: parsed.subject,
+        },
+        400
+      );
+    }
+
+    const uploadRoot = path.join(process.cwd(), "opplastede_dokumenter");
+    const emailUploadDir = path.join(uploadRoot, "email");
+
+    if (!fs.existsSync(emailUploadDir)) {
+      fs.mkdirSync(emailUploadDir, { recursive: true });
+    }
+
+    const savedFiles = attachments.map((attachment, index) => {
+      const originalFileName = attachment.filename || `vedlegg_${index + 1}`;
+      const safeName = originalFileName.replace(/[^a-zA-Z0-9æøåÆØÅ._-]/g, "_");
+      const storedFileName = `email_${Date.now()}_${Math.round(
+        Math.random() * 1e9
+      )}_${safeName}`;
+
+      const targetPath = path.join(emailUploadDir, storedFileName);
+      fs.writeFileSync(targetPath, attachment.content);
+
+      const fileUrl = `/opplastede_dokumenter/email/${storedFileName}`;
+
+      return {
+        originalFileName,
+        storedFileName,
+        fileUrl,
+        mimeType: attachment.contentType ?? null,
+        fileSize: attachment.size ?? null,
+        pageCount: null,
+        displayOrder: index,
+      };
+    });
+
+    const mainFile = savedFiles[0];
+
+    const result = await createInboxDocumentPackage({
+      householdId: 1,
+      uploadedByUserId: null,
+      source: "email",
+      fromEmail: parsed.from?.text ?? null,
+      subject: parsed.subject ?? null,
+      fileName: parsed.subject || mainFile.originalFileName || "E-post dokumentpakke",
+      fileUrl: mainFile.fileUrl,
+      mimeType: mainFile.mimeType,
+      fileSize: savedFiles.reduce((sum, file) => sum + (file.fileSize ?? 0), 0),
+      status: "new",
+      files: savedFiles,
+    });
+
+    fs.renameSync(mailFilePath, path.join(processedDir, mailFileName));
+
+    return c.json({
+      success: true,
+      message: "E-post importert som dokumentpakke",
+      inboxDocumentId: result.inboxDocumentId,
+      fileCount: result.fileCount,
+      subject: parsed.subject,
+      from: parsed.from?.text ?? null,
+    });
+  } catch (error: any) {
+    console.error("Feil ved import av e-post:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
 });
