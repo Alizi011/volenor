@@ -541,6 +541,93 @@ app.post("/api/inbox_documents/:id/extract_text", async (c) => {
   }
 });
 
+// --- SEND EKSISTERENDE DOKUMENT TIL AI-INNBOKS ---
+app.post("/api/documents/:id/send_to_inbox", async (c) => {
+  try {
+    const id = Number(c.req.param("id"));
+
+    const result: any = await getDb().execute(sql`
+      SELECT *
+      FROM documents
+      WHERE id = ${id}
+      LIMIT 1
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    const doc = rows[0];
+
+    if (!doc) {
+      return c.json(
+        { success: false, message: "Dokument ikke funnet" },
+        404
+      );
+    }
+
+    const fileUrl = doc.fileData
+      ? String(doc.fileData).startsWith("/")
+        ? doc.fileData
+        : `/${doc.fileData}`
+      : null;
+
+    if (!fileUrl) {
+      return c.json(
+        { success: false, message: "Dokumentet mangler filsti" },
+        400
+      );
+    }
+
+    await getDb().execute(sql`
+      INSERT INTO inbox_documents
+      (
+        householdId,
+        uploadedByUserId,
+        source,
+        fromEmail,
+        subject,
+        fileName,
+        fileUrl,
+        mimeType,
+        fileSize,
+        status
+      )
+      VALUES
+      (
+        ${doc.householdId ?? 1},
+        ${null},
+        ${"existing_document"},
+        ${null},
+        ${"Sendt fra dokumentarkiv"},
+        ${doc.name ?? "Dokument"},
+        ${fileUrl},
+        ${doc.type ?? null},
+        ${doc.size ?? null},
+        ${"new"}
+      )
+    `);
+
+    return c.json({
+      success: true,
+      message: "Dokument sendt til AI-innboks",
+    });
+  } catch (error: any) {
+    console.error("Feil ved sending til AI-innboks:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
+
 // --- ENDEPUNKT FOR Å STARTE ANALYSE AV BANKUTSKRIFT ---
 app.post("/api/analyze_bank_statement", async (c) => {
   try {
