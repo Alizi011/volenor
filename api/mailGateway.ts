@@ -6,7 +6,7 @@ import { createInboxDocumentPackage } from "./mail/importer";
 
 export const mailGatewayRouter = new Hono();
 
-mailGatewayRouter.get("/api/mail_gateway/messages", async (c) => {
+mailGatewayRouter.get("/messages", async (c) => {
   try {
     const maildirNew = "/root/Maildir/new";
 
@@ -37,7 +37,7 @@ mailGatewayRouter.get("/api/mail_gateway/messages", async (c) => {
   }
 });
 
-mailGatewayRouter.get("/api/mail_gateway/parse_first", async (c) => {
+mailGatewayRouter.get("/parse_first", async (c) => {
   try {
     const maildirNew = "/root/Maildir/new";
 
@@ -73,7 +73,7 @@ mailGatewayRouter.get("/api/mail_gateway/parse_first", async (c) => {
     return c.json({ success: false, message: error.message }, 500);
   }
 
-  mailGatewayRouter.post("/api/mail_gateway/import_first", async (c) => {
+  mailGatewayRouter.post("/import_first", async (c) => {
   try {
     const maildirNew = "/root/Maildir/new";
     const processedDir = "/root/Maildir/processed";

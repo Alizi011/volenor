@@ -34,7 +34,7 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
-app.route("/", mailGatewayRouter);
+app.route("/api/mail_gateway", mailGatewayRouter);
 
 app.put("/api/documents/:id", async (c) => {
   try {
