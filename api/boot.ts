@@ -34,7 +34,7 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
-app.route("/api/mail_gateway", mailGatewayRouter);
+
 
 app.put("/api/documents/:id", async (c) => {
   try {
@@ -1349,6 +1349,8 @@ app.post("/api/bank_accounts/from_suggestion", async (c) => {
 
 // Gjør mappen tilgjengelig over HTTP for visning og nedlasting
 app.use("/opplastede_dokumenter/*", serveStatic({ root: "." }));
+
+app.route("/api/mail_gateway", mailGatewayRouter);
 
 // --- TRPC ADAPTER ---
 app.use("/api/trpc/*", async (c) => {
