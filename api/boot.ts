@@ -1,5 +1,4 @@
 import "dotenv/config";
-
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { HttpBindings } from "@hono/node-server";
@@ -677,6 +676,69 @@ app.get("/api/mail_gateway/messages", async (c) => {
       },
       500
     );
+  }
+});
+
+// --- TEST: PARSE FØRSTE E-POST MED MAILPARSER ---
+import { simpleParser } from "mailparser";
+
+app.get("/api/mail_gateway/parse_first", async (c) => {
+  try {
+    const maildirNew = "/root/Maildir/new";
+
+    if (!fs.existsSync(maildirNew)) {
+      return c.json({
+        success: false,
+        message: "Maildir finnes ikke",
+      });
+    }
+
+    const files = fs.readdirSync(maildirNew);
+
+    if (files.length === 0) {
+      return c.json({
+        success: false,
+        message: "Ingen e-poster funnet",
+      });
+    }
+
+    const filePath = path.join(maildirNew, files[0]);
+
+    const parsed = await simpleParser(
+      fs.readFileSync(filePath)
+    );
+
+    return c.json({
+      success: true,
+
+      subject: parsed.subject,
+
+      from: parsed.from?.text,
+
+      to: Array.isArray(parsed.to)
+      ? parsed.to.map((t) => t.text).join(", ")
+      : parsed.to?.text,
+
+      text: parsed.text?.substring(0, 500),
+
+      html: parsed.html ? true : false,
+
+      attachments: parsed.attachments.map((a) => ({
+        filename: a.filename,
+        contentType: a.contentType,
+        size: a.size,
+      })),
+    });
+
+  } catch (error: any) {
+
+    console.error(error);
+
+    return c.json({
+      success: false,
+      message: error.message,
+    },500);
+
   }
 });
 
