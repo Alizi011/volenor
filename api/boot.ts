@@ -21,6 +21,7 @@ import { sql } from "drizzle-orm";
 import * as schema from "@db/schema";
 import { getDb } from "./queries/connection"; 
 
+
 const app = new Hono<{ Bindings: HttpBindings }>();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -379,6 +380,29 @@ app.get("/api/bank_statements", async (c) => {
         success: false,
         message: "Serverfeil: " + error.message,
       },
+      500
+    );
+  }
+});
+
+app.get("/api/inbox_documents", async (c) => {
+  try {
+    const result: any = await getDb().execute(sql`
+      SELECT *
+      FROM inbox_documents
+      ORDER BY createdAt DESC
+    `);
+
+    const rows = Array.isArray(result) ? result[0] ?? result : [];
+
+    return c.json({
+      success: true,
+      inboxDocuments: rows,
+    });
+  } catch (error: any) {
+    console.error("Failed to fetch inbox documents:", error);
+    return c.json(
+      { success: false, message: error.message || "Kunne ikke hente innboks" },
       500
     );
   }
