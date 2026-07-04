@@ -542,6 +542,148 @@ app.post("/api/inbox_documents/:id/extract_text", async (c) => {
   }
 });
 
+// --- ANALYSER INNBOKS-DOKUMENT MED AI ---
+app.post("/api/inbox_documents/:id/analyze", async (c) => {
+  try {
+    const id = Number(c.req.param("id"));
+
+    const result: any = await getDb().execute(sql`
+      SELECT *
+      FROM inbox_documents
+      WHERE id = ${id}
+      LIMIT 1
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    const doc = rows[0];
+
+    if (!doc) {
+      return c.json({ success: false, message: "Dokument ikke funnet" }, 404);
+    }
+
+    const relativeFilePath = String(doc.fileUrl || "").replace(/^\//, "");
+    const filePath = path.join(process.cwd(), relativeFilePath);
+
+    if (!fs.existsSync(filePath)) {
+      return c.json(
+        { success: false, message: "Filen ble ikke funnet", filePath },
+        404
+      );
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+
+    if (ext !== ".pdf") {
+      return c.json(
+        { success: false, message: "AI-analyse støtter foreløpig kun PDF" },
+        400
+      );
+    }
+
+    const pdfBuffer = fs.readFileSync(filePath);
+    const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
+    const { totalPages, text } = await extractText(pdf, { mergePages: true });
+
+    const aiResponse = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: `
+Du er en norsk dokumentanalyse-agent for Volenor.
+
+VIKTIG:
+Leverandør/avsender skal hentes fra selve dokumentinnholdet.
+Ikke bruk e-postavsender, filnavn eller teknisk avsender som leverandør.
+
+Analyser dokumentteksten og hent ut:
+- documentType: invoice, receipt, bank_statement, insurance, debt_collection, letter, contract, unknown
+- supplier: leverandør/firma/person fra dokumentet, eller null
+- amount: totalbeløp i NOK hvis mulig, ellers null
+- dueDate: forfallsdato i format YYYY-MM-DD hvis mulig, ellers null
+- summary: kort norsk sammendrag
+- confidence: tall mellom 0 og 1
+
+Dokumenttekst:
+${text.slice(0, 12000)}
+`,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "inbox_document_analysis",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              documentType: {
+                type: "string",
+                enum: [
+                  "invoice",
+                  "receipt",
+                  "bank_statement",
+                  "insurance",
+                  "debt_collection",
+                  "letter",
+                  "contract",
+                  "unknown"
+                ],
+              },
+              supplier: { type: ["string", "null"] },
+              amount: { type: ["number", "null"] },
+              dueDate: { type: ["string", "null"] },
+              summary: { type: "string" },
+              confidence: { type: "number" },
+            },
+            required: [
+              "documentType",
+              "supplier",
+              "amount",
+              "dueDate",
+              "summary",
+              "confidence"
+            ],
+          },
+        },
+      },
+    });
+
+    const analysis = JSON.parse(aiResponse.output_text);
+
+    await getDb().execute(sql`
+      UPDATE inbox_documents
+      SET
+        detectedType = ${analysis.documentType},
+        detectedSender = ${analysis.supplier},
+        detectedAmount = ${analysis.amount},
+        detectedDueDate = ${analysis.dueDate},
+        aiSummary = ${analysis.summary},
+        aiConfidence = ${Math.round((analysis.confidence ?? 0) * 100)}
+      WHERE id = ${id}
+    `);
+
+    return c.json({
+      success: true,
+      message: "Dokument analysert",
+      documentId: id,
+      totalPages,
+      analysis,
+    });
+  } catch (error: any) {
+    console.error("Feil ved AI-analyse av innboks-dokument:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
 // --- SEND EKSISTERENDE DOKUMENT TIL AI-INNBOKS ---
 app.post("/api/documents/:id/send_to_inbox", async (c) => {
   try {
