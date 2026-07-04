@@ -72,6 +72,7 @@ mailGatewayRouter.get("/parse_first", async (c) => {
   } catch (error: any) {
     return c.json({ success: false, message: error.message }, 500);
   }
+  });
 
   mailGatewayRouter.post("/import_first", async (c) => {
   try {
@@ -180,6 +181,4 @@ mailGatewayRouter.get("/parse_first", async (c) => {
       500
     );
   }
-});
-
 });
