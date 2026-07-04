@@ -408,6 +408,59 @@ app.get("/api/inbox_documents", async (c) => {
   }
 });
 
+// --- LEGG TIL ET DOKUMENT I DOKUMENTINNBOKSEN ---
+app.post("/api/inbox_documents", async (c) => {
+  try {
+    const body = await c.req.json();
+
+    await getDb().execute(sql`
+      INSERT INTO inbox_documents
+      (
+        householdId,
+        uploadedByUserId,
+        source,
+        fromEmail,
+        subject,
+        fileName,
+        fileUrl,
+        mimeType,
+        fileSize,
+        status
+      )
+      VALUES
+      (
+        ${body.householdId ?? 1},
+        ${body.uploadedByUserId ?? null},
+        ${body.source ?? "email"},
+        ${body.fromEmail ?? null},
+        ${body.subject ?? null},
+        ${body.fileName},
+        ${body.fileUrl},
+        ${body.mimeType ?? null},
+        ${body.fileSize ?? null},
+        'new'
+      )
+    `);
+
+    return c.json({
+      success: true,
+      message: "Dokument lagt i dokumentinnboksen",
+    });
+
+  } catch (error: any) {
+    console.error(error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
+
 // --- ENDEPUNKT FOR Å STARTE ANALYSE AV BANKUTSKRIFT ---
 app.post("/api/analyze_bank_statement", async (c) => {
   try {
