@@ -693,6 +693,8 @@ app.get("/api/mail_gateway/parse_first", async (c) => {
       });
     }
 
+
+
     const files = fs.readdirSync(maildirNew);
 
     if (files.length === 0) {
@@ -739,6 +741,125 @@ app.get("/api/mail_gateway/parse_first", async (c) => {
       message: error.message,
     },500);
 
+  }
+});
+
+// --- IMPORTER FØRSTE E-POSTVEDLEGG TIL DOKUMENTINNBOKS ---
+app.post("/api/mail_gateway/import_first", async (c) => {
+  try {
+    const maildirNew = "/root/Maildir/new";
+    const processedDir = "/root/Maildir/processed";
+
+    if (!fs.existsSync(maildirNew)) {
+      return c.json({ success: false, message: "Maildir finnes ikke" }, 404);
+    }
+
+    if (!fs.existsSync(processedDir)) {
+      fs.mkdirSync(processedDir, { recursive: true });
+    }
+
+    const files = fs.readdirSync(maildirNew);
+
+    if (files.length === 0) {
+      return c.json({ success: false, message: "Ingen e-poster funnet" }, 404);
+    }
+
+    const fileName = files[0];
+    const filePath = path.join(maildirNew, fileName);
+
+    const parsed = await simpleParser(fs.readFileSync(filePath));
+
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+    ];
+
+    const attachments = parsed.attachments.filter((a) =>
+      allowedTypes.includes(a.contentType)
+    );
+
+    if (attachments.length === 0) {
+      return c.json({
+        success: false,
+        message: "E-posten har ingen støttede vedlegg",
+        subject: parsed.subject,
+      }, 400);
+    }
+
+    const emailUploadDir = path.join(uploadDir, "email");
+    if (!fs.existsSync(emailUploadDir)) {
+      fs.mkdirSync(emailUploadDir, { recursive: true });
+    }
+
+    const importedDocuments: any[] = [];
+
+    for (const attachment of attachments) {
+      const originalName = attachment.filename || "vedlegg";
+      const ext = path.extname(originalName) || ".bin";
+      const safeName = originalName.replace(/[^a-zA-Z0-9æøåÆØÅ._-]/g, "_");
+      const uniqueName = `email_${Date.now()}_${Math.round(Math.random() * 1e9)}_${safeName}`;
+      const targetPath = path.join(emailUploadDir, uniqueName);
+
+      fs.writeFileSync(targetPath, attachment.content);
+
+      const relativePath = `opplastede_dokumenter/email/${uniqueName}`;
+
+      await getDb().execute(sql`
+        INSERT INTO inbox_documents
+        (
+          householdId,
+          uploadedByUserId,
+          source,
+          fromEmail,
+          subject,
+          fileName,
+          fileUrl,
+          mimeType,
+          fileSize,
+          status
+        )
+        VALUES
+        (
+          ${1},
+          ${null},
+          ${"email"},
+          ${parsed.from?.text ?? null},
+          ${parsed.subject ?? null},
+          ${originalName},
+          ${`/${relativePath}`},
+          ${attachment.contentType ?? null},
+          ${attachment.size ?? null},
+          ${"new"}
+        )
+      `);
+
+      importedDocuments.push({
+        fileName: originalName,
+        fileUrl: `/${relativePath}`,
+        mimeType: attachment.contentType,
+        fileSize: attachment.size,
+      });
+    }
+
+    fs.renameSync(filePath, path.join(processedDir, fileName));
+
+    return c.json({
+      success: true,
+      message: "E-postvedlegg importert",
+      count: importedDocuments.length,
+      documents: importedDocuments,
+    });
+  } catch (error: any) {
+    console.error("Feil ved import av e-post:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
   }
 });
 
