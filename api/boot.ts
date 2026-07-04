@@ -627,6 +627,58 @@ app.post("/api/documents/:id/send_to_inbox", async (c) => {
   }
 });
 
+// --- TEST: LES E-POSTER FRA MAILDIR ---
+app.get("/api/mail_gateway/messages", async (c) => {
+  try {
+    const maildirNew = "/root/Maildir/new";
+
+    if (!fs.existsSync(maildirNew)) {
+      return c.json({
+        success: true,
+        messages: [],
+        message: "Maildir/new finnes ikke ennå",
+      });
+    }
+
+    const files = fs.readdirSync(maildirNew);
+
+    const messages = files.map((fileName) => {
+      const filePath = path.join(maildirNew, fileName);
+      const raw = fs.readFileSync(filePath, "utf8");
+
+      const subjectMatch = raw.match(/^Subject:\s*(.*)$/im);
+      const fromMatch = raw.match(/^From:\s*(.*)$/im);
+      const toMatch = raw.match(/^To:\s*(.*)$/im);
+      const dateMatch = raw.match(/^Date:\s*(.*)$/im);
+
+      return {
+        fileName,
+        filePath,
+        from: fromMatch?.[1] ?? null,
+        to: toMatch?.[1] ?? null,
+        subject: subjectMatch?.[1] ?? null,
+        date: dateMatch?.[1] ?? null,
+        preview: raw.slice(0, 1000),
+      };
+    });
+
+    return c.json({
+      success: true,
+      count: messages.length,
+      messages,
+    });
+  } catch (error: any) {
+    console.error("Feil ved lesing av Maildir:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
 
 // --- ENDEPUNKT FOR Å STARTE ANALYSE AV BANKUTSKRIFT ---
 app.post("/api/analyze_bank_statement", async (c) => {
