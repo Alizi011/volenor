@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Inbox,
@@ -24,6 +24,19 @@ export default function InboxView({ inbox, customCategories, onCategorize, onDel
   const [sortingId, setSortingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [emailInboxDocuments, setEmailInboxDocuments] = useState<any[]>([]);
+
+useEffect(() => {
+  fetch('/api/inbox_documents')
+    .then((res) => res.json())
+    .then((data) => {
+      setEmailInboxDocuments(data.inboxDocuments ?? []);
+    })
+    .catch((err) => {
+      console.error('Kunne ikke hente e-postinnboks:', err);
+    });
+}, []);
 
   const allCategories = [...CATEGORIES, ...customCategories];
 
@@ -98,6 +111,7 @@ export default function InboxView({ inbox, customCategories, onCategorize, onDel
           </motion.div>
         )}
 
+
         {/* Drop zone */}
         <div
           onDragOver={handleDragOver}
@@ -130,7 +144,7 @@ export default function InboxView({ inbox, customCategories, onCategorize, onDel
         </div>
 
         {/* File list */}
-        {inbox.length === 0 ? (
+        {inbox.length === 0 && emailInboxDocuments.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -231,6 +245,60 @@ export default function InboxView({ inbox, customCategories, onCategorize, onDel
             </AnimatePresence>
           </div>
         )}
+
+        {emailInboxDocuments.length > 0 && (
+  <div className="space-y-3 mt-6">
+    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+      Dokumenter mottatt via e-post
+    </p>
+
+    {emailInboxDocuments.map((doc, i) => (
+      <motion.div
+        key={doc.id ?? `email-inbox-${i}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center gap-5 rounded-xl px-6 py-4"
+        style={{
+          backgroundColor: 'var(--bg-secondary)',
+          borderLeft: '3px solid var(--accent-yellow)',
+        }}
+      >
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: 'var(--bg-tertiary)' }}
+        >
+          <FileText size={24} style={{ color: 'var(--text-secondary)' }} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+            {doc.fileName}
+          </p>
+
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+            {doc.fromEmail || 'Ukjent avsender'} · {doc.status || 'new'}
+          </p>
+
+          {doc.subject && (
+            <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>
+              {doc.subject}
+            </p>
+          )}
+        </div>
+
+        <button
+          className="h-9 px-4 rounded-lg text-sm font-medium"
+          style={{
+            backgroundColor: 'var(--accent-yellow)',
+            color: '#0a0a0a',
+          }}
+        >
+          Analyser
+        </button>
+      </motion.div>
+    ))}
+  </div>
+)}
       </div>
     </div>
   );
