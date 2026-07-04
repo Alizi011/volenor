@@ -461,6 +461,86 @@ app.post("/api/inbox_documents", async (c) => {
 });
 
 
+// --- TEST: LES TEKST FRA INNBOKS-DOKUMENT ---
+app.post("/api/inbox_documents/:id/extract_text", async (c) => {
+  try {
+    const id = Number(c.req.param("id"));
+
+    const result: any = await getDb().execute(sql`
+      SELECT *
+      FROM inbox_documents
+      WHERE id = ${id}
+      LIMIT 1
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    const doc = rows[0];
+
+    if (!doc) {
+      return c.json(
+        { success: false, message: "Dokument ikke funnet" },
+        404
+      );
+    }
+
+    const relativeFilePath = String(doc.fileUrl || "").replace(/^\//, "");
+    const filePath = path.join(process.cwd(), relativeFilePath);
+
+    if (!fs.existsSync(filePath)) {
+      return c.json(
+        {
+          success: false,
+          message: "Filen ble ikke funnet på serveren.",
+          filePath,
+        },
+        404
+      );
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+
+    if (ext !== ".pdf") {
+      return c.json(
+        {
+          success: false,
+          message: "Foreløpig støtter teksttest kun PDF.",
+          fileName: doc.fileName,
+          extension: ext,
+        },
+        400
+      );
+    }
+
+    const pdfBuffer = fs.readFileSync(filePath);
+    const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
+    const { totalPages, text } = await extractText(pdf, { mergePages: true });
+
+    return c.json({
+      success: true,
+      documentId: doc.id,
+      fileName: doc.fileName,
+      totalPages,
+      textLength: text.length,
+      textPreview: text.slice(0, 2000),
+    });
+  } catch (error: any) {
+    console.error("Feil ved tekstuttrekk fra innboks-dokument:", error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
+});
+
 // --- ENDEPUNKT FOR Å STARTE ANALYSE AV BANKUTSKRIFT ---
 app.post("/api/analyze_bank_statement", async (c) => {
   try {
