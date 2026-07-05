@@ -619,17 +619,42 @@ if (!text || text.trim().length < 50) {
       input: `
 Du er en norsk dokumentanalyse-agent for Volenor.
 
+Analyser dokumentteksten og hent ut strukturert informasjon.
+
 VIKTIG:
-Leverandør/avsender skal hentes fra selve dokumentinnholdet.
+Leverandør/kreditor skal hentes fra selve dokumentinnholdet.
 Ikke bruk e-postavsender, filnavn eller teknisk avsender som leverandør.
 
-Analyser dokumentteksten og hent ut:
-- documentType: invoice, receipt, bank_statement, insurance, debt_collection, letter, contract, unknown
-- supplier: leverandør/firma/person fra dokumentet, eller null
-- amount: totalbeløp i NOK hvis mulig, ellers null
-- dueDate: forfallsdato i format YYYY-MM-DD hvis mulig, ellers null
-- summary: kort norsk sammendrag
-- confidence: tall mellom 0 og 1
+Hvis dokumentet gjelder inkasso, purring, gjeld, krav, namsmann, forliksråd eller rettslig inndrivelse:
+- skill mellom hovedkrav, renter, gebyrer, inkassosalær, saksomkostninger og total saldo
+- finn alle parter som er nevnt
+- finn opprinnelig kreditor
+- finn inkassoselskap
+- finn offentlig/rettslig instans hvis nevnt
+- finn saksnummer eller referanse hvis mulig
+
+Returner:
+- documentType
+- supplier
+- amount
+- dueDate
+- summary
+- confidence
+- caseType
+- originalCreditor
+- collectionAgency
+- publicAuthority
+- originalClaim
+- interestAmount
+- feeAmount
+- collectionFee
+- legalCost
+- currentBalance
+- deadline
+- caseReference
+- recommendedAction
+- priority
+- reason
 
 Dokumenttekst:
 ${text.slice(0, 12000)}
@@ -643,33 +668,80 @@ ${text.slice(0, 12000)}
             type: "object",
             additionalProperties: false,
             properties: {
-              documentType: {
-                type: "string",
-                enum: [
-                  "invoice",
-                  "receipt",
-                  "bank_statement",
-                  "insurance",
-                  "debt_collection",
-                  "letter",
-                  "contract",
-                  "unknown"
-                ],
-              },
-              supplier: { type: ["string", "null"] },
-              amount: { type: ["number", "null"] },
-              dueDate: { type: ["string", "null"] },
-              summary: { type: "string" },
-              confidence: { type: "number" },
-            },
+  documentType: {
+    type: "string",
+    enum: [
+      "invoice",
+      "receipt",
+      "bank_statement",
+      "insurance",
+      "debt_collection",
+      "letter",
+      "contract",
+      "unknown"
+    ],
+  },
+  supplier: { type: ["string", "null"] },
+  amount: { type: ["number", "null"] },
+  dueDate: { type: ["string", "null"] },
+  summary: { type: "string" },
+  confidence: { type: "number" },
+
+  caseType: {
+    type: "string",
+    enum: ["none", "debt_collection", "debt", "legal", "payment_reminder", "unknown"],
+  },
+  originalCreditor: { type: ["string", "null"] },
+  collectionAgency: { type: ["string", "null"] },
+  publicAuthority: { type: ["string", "null"] },
+  originalClaim: { type: ["number", "null"] },
+  interestAmount: { type: ["number", "null"] },
+  feeAmount: { type: ["number", "null"] },
+  collectionFee: { type: ["number", "null"] },
+  legalCost: { type: ["number", "null"] },
+  currentBalance: { type: ["number", "null"] },
+  deadline: { type: ["string", "null"] },
+  caseReference: { type: ["string", "null"] },
+  recommendedAction: {
+    type: "string",
+    enum: [
+      "create_case",
+      "update_existing_case",
+      "create_bill",
+      "archive",
+      "review_manually",
+      "none"
+    ],
+  },
+  priority: {
+    type: "string",
+    enum: ["low", "normal", "high", "urgent"],
+  },
+  reason: { type: "string" },
+},
             required: [
-              "documentType",
-              "supplier",
-              "amount",
-              "dueDate",
-              "summary",
-              "confidence"
-            ],
+  "documentType",
+  "supplier",
+  "amount",
+  "dueDate",
+  "summary",
+  "confidence",
+  "caseType",
+  "originalCreditor",
+  "collectionAgency",
+  "publicAuthority",
+  "originalClaim",
+  "interestAmount",
+  "feeAmount",
+  "collectionFee",
+  "legalCost",
+  "currentBalance",
+  "deadline",
+  "caseReference",
+  "recommendedAction",
+  "priority",
+  "reason"
+],
           },
         },
       },

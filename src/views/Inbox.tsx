@@ -275,26 +275,79 @@ useEffect(() => {
             {doc.fileName}
           </p>
 
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-            {doc.fromEmail || 'Ukjent avsender'} · {doc.status || 'new'}
-          </p>
+          <p
+  className="text-xs mt-0.5"
+  style={{ color: "var(--text-secondary)" }}
+>
+  {doc.detectedSender || doc.fromEmail || "Ukjent avsender"}
+</p>
 
-          {doc.subject && (
-            <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>
-              {doc.subject}
-            </p>
-          )}
+<div
+  className="flex flex-wrap gap-2 mt-2 text-xs"
+  style={{ color: "var(--text-secondary)" }}
+>
+  {doc.detectedType && (
+    <span
+      className="px-2 py-1 rounded"
+      style={{ background: "var(--bg-tertiary)" }}
+    >
+      {doc.detectedType}
+    </span>
+  )}
+
+  {doc.detectedAmount && (
+    <span
+      className="px-2 py-1 rounded"
+      style={{ background: "var(--bg-tertiary)" }}
+    >
+      {Number(doc.detectedAmount).toLocaleString("nb-NO")} kr
+    </span>
+  )}
+
+  {doc.detectedDueDate && (
+    <span
+      className="px-2 py-1 rounded"
+      style={{ background: "var(--bg-tertiary)" }}
+    >
+      Forfall {doc.detectedDueDate}
+    </span>
+  )}
+
+  {doc.aiConfidence && (
+    <span
+      className="px-2 py-1 rounded"
+      style={{
+        background:
+          Number(doc.aiConfidence) >= 90
+            ? "#14532d"
+            : "#78350f",
+        color: "white",
+      }}
+    >
+      AI {Math.round(Number(doc.aiConfidence))}%
+    </span>
+  )}
+</div>
+
+{doc.aiSummary && (
+  <p
+    className="text-xs mt-2"
+    style={{ color: "var(--text-secondary)" }}
+  >
+    {doc.aiSummary}
+  </p>
+)}
         </div>
 
         <button
-          className="h-9 px-4 rounded-lg text-sm font-medium"
-          style={{
-            backgroundColor: 'var(--accent-yellow)',
-            color: '#0a0a0a',
-          }}
-        >
-          Analyser
-        </button>
+  className="h-9 px-4 rounded-lg text-sm font-medium"
+  style={{
+    backgroundColor: doc.aiSummary ? 'var(--bg-tertiary)' : 'var(--accent-yellow)',
+    color: doc.aiSummary ? 'var(--text-primary)' : '#0a0a0a',
+  }}
+>
+  {doc.aiSummary ? 'Analysert' : 'Analyser'}
+</button>
       </motion.div>
     ))}
   </div>
