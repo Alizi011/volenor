@@ -7,6 +7,7 @@ import { appRouter } from "./router";
 import { createContext } from "./context";
 import { env } from "./lib/env";
 import { mailGatewayRouter } from "./mailGateway";
+import { extractTextWithOcr } from "./ocr/extractText";
 
 // Importere verktøy for filhåndtering og statiske filer
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -517,9 +518,21 @@ app.post("/api/inbox_documents/:id/extract_text", async (c) => {
       );
     }
 
-    const pdfBuffer = fs.readFileSync(filePath);
-    const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
-    const { totalPages, text } = await extractText(pdf, { mergePages: true });
+const pdfBuffer = fs.readFileSync(filePath);
+const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
+const extracted = await extractText(pdf, { mergePages: true });
+
+let totalPages = extracted.totalPages;
+let text = extracted.text;
+let usedOcr = false;
+
+if (!text || text.trim().length < 50) {
+  const ocrResult = await extractTextWithOcr(filePath);
+
+  text = ocrResult.text;
+  totalPages = ocrResult.pageCount;
+  usedOcr = true;
+}
 
     return c.json({
       success: true,
@@ -585,9 +598,21 @@ app.post("/api/inbox_documents/:id/analyze", async (c) => {
       );
     }
 
-    const pdfBuffer = fs.readFileSync(filePath);
-    const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
-    const { totalPages, text } = await extractText(pdf, { mergePages: true });
+   const pdfBuffer = fs.readFileSync(filePath);
+const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
+const extracted = await extractText(pdf, { mergePages: true });
+
+let totalPages = extracted.totalPages;
+let text = extracted.text;
+let usedOcr = false;
+
+if (!text || text.trim().length < 50) {
+  const ocrResult = await extractTextWithOcr(filePath);
+
+  text = ocrResult.text;
+  totalPages = ocrResult.pageCount;
+  usedOcr = true;
+}
 
     const aiResponse = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -664,13 +689,15 @@ ${text.slice(0, 12000)}
       WHERE id = ${id}
     `);
 
-    return c.json({
-      success: true,
-      message: "Dokument analysert",
-      documentId: id,
-      totalPages,
-      analysis,
-    });
+return c.json({
+  success: true,
+  message: "Dokument analysert",
+  documentId: id,
+  totalPages,
+  usedOcr,
+  analysis,
+});
+
   } catch (error: any) {
     console.error("Feil ved AI-analyse av innboks-dokument:", error);
 
