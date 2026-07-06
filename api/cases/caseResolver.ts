@@ -65,6 +65,8 @@ export async function processInboxDocument(
     WHERE id = ${inboxDocument.id}
   `);
 
+  console.log("CASE EVENT SERVICE: createEvent kalt", input);
+  
   await createEvent({
     caseId: newCase.id,
     inboxDocumentId: inboxDocument.id,
