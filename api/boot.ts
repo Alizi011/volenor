@@ -8,6 +8,7 @@ import { createContext } from "./context";
 import { env } from "./lib/env";
 import { mailGatewayRouter } from "./mailGateway";
 import { extractTextWithOcr } from "./ocr/extractText";
+import { createCase } from "./cases/caseService";
 
 // Importere verktøy for filhåndtering og statiske filer
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -1601,6 +1602,36 @@ app.use("/api/trpc/*", async (c) => {
     router: appRouter,
     createContext,
   });
+});
+
+// --- TEST OPPRETT SAK ---
+app.post("/api/cases/test_create", async (c) => {
+  try {
+    const result = await createCase({
+      householdId: 1,
+      title: "Test inkassosak",
+      type: "debt_collection",
+      priority: "normal",
+      summary: "Opprettet fra test-endepunkt",
+      currentBalance: 403,
+      createdByUserId: 1,
+    });
+
+    return c.json({
+      success: true,
+      case: result,
+    });
+  } catch (error: any) {
+    console.error(error);
+
+    return c.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      500
+    );
+  }
 });
 
 // Fallback for ukjente API-ruter
