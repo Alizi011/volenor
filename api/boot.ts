@@ -9,6 +9,7 @@ import { env } from "./lib/env";
 import { mailGatewayRouter } from "./mailGateway";
 import { extractTextWithOcr } from "./ocr/extractText";
 import { createCase } from "./cases/caseService";
+import { processInboxDocument } from "./cases/caseResolver";
 
 // Importere verktøy for filhåndtering og statiske filer
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -750,6 +751,15 @@ ${text.slice(0, 12000)}
 
     const analysis = JSON.parse(aiResponse.output_text);
 
+    let resolvedCase = null;
+
+if (
+  analysis.recommendedAction === "create_case" ||
+  analysis.recommendedAction === "update_existing_case"
+) {
+  resolvedCase = await processInboxDocument(doc, analysis);
+}
+
     await getDb().execute(sql`
       UPDATE inbox_documents
       SET
@@ -769,6 +779,7 @@ return c.json({
   totalPages,
   usedOcr,
   analysis,
+  case: resolvedCase,
 });
 
   } catch (error: any) {
@@ -783,6 +794,8 @@ return c.json({
     );
   }
 });
+
+
 
 // --- SEND EKSISTERENDE DOKUMENT TIL AI-INNBOKS ---
 app.post("/api/documents/:id/send_to_inbox", async (c) => {
