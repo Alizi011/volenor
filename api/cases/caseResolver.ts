@@ -1,24 +1,30 @@
 import { createCase } from "./caseService";
-import { findMatchingCase } from "./caseMatcher";
+import { resolveDocument } from "../resolution/resolutionEngine";
 
 export async function processInboxDocument(
   inboxDocument: any,
   analysis: any
 ) {
+  const decision = await resolveDocument(inboxDocument, analysis);
 
-    const existingCase = await findMatchingCase(analysis);
+  if (decision.action === "update_case" && decision.caseId) {
+    return {
+      id: decision.caseId,
+      matched: true,
+      action: decision.action,
+      reason: decision.reason,
+      confidence: decision.confidence,
+    };
+  }
 
-if (existingCase) {
-  return {
-    id: Number(existingCase.id),
-    caseNumber: existingCase.caseNumber,
-    title: existingCase.title,
-    type: existingCase.type,
-    status: existingCase.status,
-    priority: existingCase.priority,
-    matched: true,
-  };
-}
+  if (decision.action !== "create_case") {
+    return {
+      action: decision.action,
+      reason: decision.reason,
+      confidence: decision.confidence,
+      matched: false,
+    };
+  }
 
   const newCase = await createCase({
     householdId: inboxDocument.householdId,
@@ -39,9 +45,7 @@ if (existingCase) {
       analysis.summary ?? null,
 
     currentBalance:
-      analysis.currentBalance ??
-      analysis.amount ??
-      null,
+      analysis.currentBalance ?? analysis.amount ?? null,
 
     externalReference:
       analysis.caseReference ?? null,
@@ -50,5 +54,11 @@ if (existingCase) {
       inboxDocument.uploadedByUserId,
   });
 
-  return newCase;
+  return {
+    ...newCase,
+    matched: false,
+    action: decision.action,
+    reason: decision.reason,
+    confidence: decision.confidence,
+  };
 }
