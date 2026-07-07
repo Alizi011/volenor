@@ -56,6 +56,17 @@ export async function processInboxDocument(
     summary: analysis.summary ?? null,
     currentBalance: analysis.currentBalance ?? analysis.amount ?? null,
     externalReference: analysis.caseReference ?? null,
+    originalCreditor: analysis.originalCreditor ?? null,
+    collectionAgency: analysis.collectionAgency ?? null,
+    publicAuthority: analysis.publicAuthority ?? null,
+
+    originalClaim: analysis.originalClaim ?? null,
+    interestAmount: analysis.interestAmount ?? null,
+    feeAmount: analysis.feeAmount ?? null,
+    collectionFee: analysis.collectionFee ?? null,
+    legalCost: analysis.legalCost ?? null,
+
+    deadline: analysis.deadline ?? null,
     createdByUserId: inboxDocument.uploadedByUserId,
   });
 

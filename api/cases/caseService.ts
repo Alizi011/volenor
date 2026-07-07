@@ -7,6 +7,15 @@ export interface CreateCaseInput {
   type: string;
   priority?: string;
   summary?: string | null;
+  originalCreditor?: string | null;
+  collectionAgency?: string | null;
+  publicAuthority?: string | null;
+  originalClaim?: number | null;
+  interestAmount?: number | null;
+  feeAmount?: number | null;
+  collectionFee?: number | null;
+  legalCost?: number | null;
+  deadline?: string | null;
   currentBalance?: number | null;
   externalReference?: string | null;
   createdByUserId?: number | null;
@@ -35,9 +44,18 @@ export async function createCase(input: CreateCaseInput) {
       priority,
       aiStatus,
       summary,
+      originalCreditor,
+      collectionAgency,
+      publicAuthority, 
       currentBalance,
+      originalClaim,
+      interestAmount,
+      feeAmount,
+      collectionFee,
+      legalCost,
       externalReference,
       openedAt,
+      deadline,
       createdByUserId,
       lastActivityAt
     )
@@ -50,7 +68,16 @@ export async function createCase(input: CreateCaseInput) {
       ${input.priority ?? "normal"},
       ${"pending"},
       ${input.summary ?? null},
+      ${input.originalCreditor ?? null},
+      ${input.collectionAgency ?? null},
+      ${input.publicAuthority ?? null},
       ${input.currentBalance ?? null},
+      ${input.originalClaim ?? null},
+      ${input.interestAmount ?? null},
+      ${input.feeAmount ?? null},
+      ${input.collectionFee ?? null},
+      ${input.legalCost ?? null},
+      ${input.deadline ?? null},
       ${input.externalReference ?? null},
       ${new Date().toISOString().slice(0, 10)},
       ${input.createdByUserId ?? null},
