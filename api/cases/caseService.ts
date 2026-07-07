@@ -77,9 +77,9 @@ export async function createCase(input: CreateCaseInput) {
       ${input.feeAmount ?? null},
       ${input.collectionFee ?? null},
       ${input.legalCost ?? null},
-      ${input.deadline ?? null},
       ${input.externalReference ?? null},
       ${new Date().toISOString().slice(0, 10)},
+      ${input.deadline ?? null},
       ${input.createdByUserId ?? null},
       CURRENT_TIMESTAMP
     )
