@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { simpleParser } from "mailparser";
 import { createInboxDocumentPackage } from "./mail/importer";
-import { analyzeInboxDocument } from "./inbox/analyzeInboxDocument";
+import { runDocumentWorkflow } from "./workflow/documentWorkflow";
 
 export const mailGatewayRouter = new Hono();
 
@@ -171,14 +171,17 @@ if (attachments.length === 0) {
       files: savedFiles,
     });
 
-    let analysisResult = null;
+let analysisResult = null;
 
 try {
-  analysisResult = await analyzeInboxDocument(
+  analysisResult = await runDocumentWorkflow(
     Number(result.inboxDocumentId)
   );
-} catch (analysisError: any) {
-  console.error("Automatisk analyse feilet:", analysisError);
+} catch (workflowError: any) {
+  console.error(
+    "Workflow feilet:",
+    workflowError
+  );
 }
 
     fs.renameSync(mailFilePath, path.join(processedDir, mailFileName));

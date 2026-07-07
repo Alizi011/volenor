@@ -22,6 +22,7 @@ import {
   financialEvents,
 } from "@db/schema";
 import { financialEngine } from "./services/financial-engine";
+import { workspaceRouter } from "./cases/workspace/workspaceRouter";
 
 const db = () => getDb();
 
@@ -764,10 +765,13 @@ export const synapseRouter = createRouter({
               theme: input.theme ?? "dark",
               language: input.language ?? "nb",
             });
-        }
+
+                }
 
         return { success: true };
           }),
+
+           workspace: workspaceRouter,
   }),
 });
 
