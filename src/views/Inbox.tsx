@@ -26,6 +26,7 @@ export default function InboxView({ inbox, customCategories, onCategorize, onDel
   const [isDragging, setIsDragging] = useState(false);
 
   const [emailInboxDocuments, setEmailInboxDocuments] = useState<any[]>([]);
+  const [analyzingId, setAnalyzingId] = useState<number | null>(null);
 
 useEffect(() => {
   fetch('/api/inbox_documents')
@@ -87,6 +88,44 @@ useEffect(() => {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+const handleAnalyzeEmailDocument = async (id: number) => {
+  try {
+    setAnalyzingId(id);
+
+    const res = await fetch(`/api/inbox_documents/${id}/analyze`, {
+      method: 'POST',
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      console.error('Analyse feilet:', data);
+      return;
+    }
+
+    setEmailInboxDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === id
+          ? {
+              ...doc,
+              detectedType: data.analysis.documentType,
+              detectedSender: data.analysis.supplier,
+              detectedAmount: data.analysis.amount,
+              detectedDueDate: data.analysis.dueDate,
+              aiSummary: data.analysis.summary,
+              aiConfidence: Math.round((data.analysis.confidence ?? 0) * 100),
+              caseId: data.case?.id ?? doc.caseId,
+            }
+          : doc
+      )
+    );
+  } catch (error) {
+    console.error('Kunne ikke analysere dokument:', error);
+  } finally {
+    setAnalyzingId(null);
+  }
+};
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -339,14 +378,26 @@ useEffect(() => {
 )}
         </div>
 
-        <button
+       <button
+  onClick={() => handleAnalyzeEmailDocument(doc.id)}
+  disabled={analyzingId === doc.id}
   className="h-9 px-4 rounded-lg text-sm font-medium"
   style={{
-    backgroundColor: doc.aiSummary ? 'var(--bg-tertiary)' : 'var(--accent-yellow)',
-    color: doc.aiSummary ? 'var(--text-primary)' : '#0a0a0a',
+    backgroundColor: doc.aiSummary
+      ? 'var(--bg-tertiary)'
+      : 'var(--accent-yellow)',
+    color: doc.aiSummary
+      ? 'var(--text-primary)'
+      : '#0a0a0a',
+    opacity: analyzingId === doc.id ? 0.7 : 1,
+    cursor: analyzingId === doc.id ? 'wait' : 'pointer',
   }}
 >
-  {doc.aiSummary ? 'Analysert' : 'Analyser'}
+  {analyzingId === doc.id
+    ? 'Analyserer...'
+    : doc.aiSummary
+    ? 'Analysert'
+    : 'Analyser'}
 </button>
       </motion.div>
     ))}
