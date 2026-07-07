@@ -78,6 +78,7 @@ mailGatewayRouter.get("/parse_first", async (c) => {
   try {
     const maildirNew = "/root/Maildir/new";
     const processedDir = "/root/Maildir/processed";
+    const processingDir = "/root/Maildir/processing";
 
     if (!fs.existsSync(maildirNew)) {
       return c.json({ success: false, message: "Maildir finnes ikke" }, 404);
@@ -87,6 +88,9 @@ mailGatewayRouter.get("/parse_first", async (c) => {
       fs.mkdirSync(processedDir, { recursive: true });
     }
 
+    if (!fs.existsSync(processingDir)) {
+  fs.mkdirSync(processingDir, { recursive: true });
+}
     const files = fs.readdirSync(maildirNew);
 
     if (files.length === 0) {
@@ -94,8 +98,12 @@ mailGatewayRouter.get("/parse_first", async (c) => {
     }
 
     const mailFileName = files[0];
-    const mailFilePath = path.join(maildirNew, mailFileName);
-    const parsed = await simpleParser(fs.readFileSync(mailFilePath));
+    const originalMailFilePath = path.join(maildirNew, mailFileName);
+    const mailFilePath = path.join(processingDir, mailFileName);
+
+fs.renameSync(originalMailFilePath, mailFilePath);
+
+const parsed = await simpleParser(fs.readFileSync(mailFilePath));
 
     const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
 
@@ -103,16 +111,18 @@ mailGatewayRouter.get("/parse_first", async (c) => {
       allowedTypes.includes(a.contentType)
     );
 
-    if (attachments.length === 0) {
-      return c.json(
-        {
-          success: false,
-          message: "E-posten har ingen støttede vedlegg",
-          subject: parsed.subject,
-        },
-        400
-      );
-    }
+if (attachments.length === 0) {
+  fs.renameSync(mailFilePath, path.join(processedDir, mailFileName));
+
+  return c.json(
+    {
+      success: false,
+      message: "E-posten har ingen støttede vedlegg",
+      subject: parsed.subject,
+    },
+    400
+  );
+}
 
     const uploadRoot = path.join(process.cwd(), "opplastede_dokumenter");
     const emailUploadDir = path.join(uploadRoot, "email");
