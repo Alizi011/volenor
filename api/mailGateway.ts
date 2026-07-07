@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { simpleParser } from "mailparser";
 import { createInboxDocumentPackage } from "./mail/importer";
+import { analyzeInboxDocument } from "./inbox/analyzeInboxDocument";
 
 export const mailGatewayRouter = new Hono();
 
@@ -170,16 +171,29 @@ if (attachments.length === 0) {
       files: savedFiles,
     });
 
+    let analysisResult = null;
+
+try {
+  analysisResult = await analyzeInboxDocument(
+    Number(result.inboxDocumentId)
+  );
+} catch (analysisError: any) {
+  console.error("Automatisk analyse feilet:", analysisError);
+}
+
     fs.renameSync(mailFilePath, path.join(processedDir, mailFileName));
 
-    return c.json({
-      success: true,
-      message: "E-post importert som dokumentpakke",
-      inboxDocumentId: result.inboxDocumentId,
-      fileCount: result.fileCount,
-      subject: parsed.subject,
-      from: parsed.from?.text ?? null,
-    });
+   return c.json({
+  success: true,
+  message: "E-post importert som dokumentpakke",
+  inboxDocumentId: result.inboxDocumentId,
+  fileCount: result.fileCount,
+  subject: parsed.subject,
+  from: parsed.from?.text ?? null,
+  analyzed: !!analysisResult,
+  analysisResult,
+});
+
   } catch (error: any) {
     console.error("Feil ved import av e-post:", error);
 
