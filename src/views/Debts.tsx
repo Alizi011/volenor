@@ -268,7 +268,7 @@ export default function Debts({
               return (
                 <motion.div key={c.id ?? `debt-case-${i}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   className="rounded-xl p-5 cursor-pointer transition-all duration-200" style={{ backgroundColor: 'var(--bg-secondary)' }}
-                  onClick={() => setSelectedCase(c)}
+                  onClick={() => onOpenCase(Number(c.id))}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                   <div className="flex items-start justify-between">
@@ -303,32 +303,33 @@ export default function Debts({
                       </div>
                     </div>
                     <div className="text-right shrink-0 flex flex-col items-end gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
+              <button
+  onClick={(e) => {
+    e.stopPropagation();
+    onOpenCase(Number(c.id));
+  }}
+  className="p-1 rounded-lg"
+  style={{ color: 'var(--accent-yellow)' }}
+  title="Åpne arbeidsområde"
+>
+  <ArrowUpRight size={16} />
+</button>
 
-                    if (confirm(`Slette saken "${c.title}"?`)) {
-                      onDeleteCase(c.id);
-                      addToast('success', 'Sak slettet');
-                    }
-                  }}
-                  className="p-1 rounded-lg"
-                  style={{ color: 'var(--accent-red)' }}
-                  title="Slett sak"
-                >
-                  <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenCase(Number(c.id));
-                  }}
-                  className="p-1 rounded-lg"
-                  title="Åpne arbeidsområde"
-                >
-                  <ArrowUpRight size={16} />
-                </button>
+<button
+  onClick={(e) => {
+    e.stopPropagation();
 
-                  <Trash2 size={16} />
-                </button>
+    if (confirm(`Slette saken "${c.title}"?`)) {
+      onDeleteCase(c.id);
+      addToast('success', 'Sak slettet');
+    }
+  }}
+  className="p-1 rounded-lg"
+  style={{ color: 'var(--accent-red)' }}
+  title="Slett sak"
+>
+  <Trash2 size={16} />
+</button>
 
                 <p
                   className="text-sm font-semibold"
