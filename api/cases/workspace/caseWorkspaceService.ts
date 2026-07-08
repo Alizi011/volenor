@@ -49,16 +49,24 @@ const documentsResult: any = await db.execute(sql`
 
 const documents = normalizeRows(documentsResult);
 
+const financeResult: any = await db.execute(sql`
+  SELECT *
+  FROM financial_items
+  WHERE debtCaseId = ${caseId}
+  ORDER BY createdAt DESC, id DESC
+`);
 
-  
+const finance = normalizeRows(financeResult);
+
 return {
+
   case: currentCase,
 
   documents,
 
   events,
 
-  finance: [],
+  finance,
 
   communications: [],
 
@@ -67,7 +75,7 @@ return {
   statistics: {
     documentCount: documents.length,
     eventCount: events.length,
-    financeCount: 0,
+    financeCount: finance.length,
     communicationCount: 0,
   },
 };
