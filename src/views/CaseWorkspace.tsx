@@ -1,5 +1,7 @@
 import { FileText, History, Bot, ArrowLeft } from "lucide-react";
 import { useCaseWorkspace } from "@/hooks/useCaseWorkspace";
+import { useState } from "react";
+import { trpc } from "@/providers/trpc";
 
 interface CaseWorkspaceProps {
   caseId: number | null;
@@ -8,6 +10,29 @@ interface CaseWorkspaceProps {
 
 export default function CaseWorkspace({ caseId, onBack }: CaseWorkspaceProps) {
   const { data, isLoading, error } = useCaseWorkspace(caseId);
+
+  const utils = trpc.useUtils();
+
+const [showPaymentForm, setShowPaymentForm] = useState(false);
+const [paymentAmount, setPaymentAmount] = useState("");
+const [paymentDate, setPaymentDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
+const [paymentNote, setPaymentNote] = useState("");
+
+const registerPayment =
+  trpc.synapse.workspace.registerPayment.useMutation({
+    onSuccess: async () => {
+      await utils.synapse.workspace.get.invalidate({
+        caseId: caseId ?? 0,
+      });
+
+      setShowPaymentForm(false);
+      setPaymentAmount("");
+      setPaymentNote("");
+    },
+  });
+  
 
   if (!caseId) return <div className="p-6">Ingen sak valgt.</div>;
   if (isLoading) return <div className="p-6">Laster sak...</div>;
@@ -54,6 +79,98 @@ export default function CaseWorkspace({ caseId, onBack }: CaseWorkspaceProps) {
             </p>
           </div>
         </div>
+        
+          {showPaymentForm && (
+  <div
+    className="rounded-2xl p-5"
+    style={{ backgroundColor: "var(--bg-secondary)" }}
+  >
+    <h2
+      className="text-sm font-semibold mb-4"
+      style={{ color: "var(--text-primary)" }}
+    >
+      Registrer betaling
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <input
+        value={paymentAmount}
+        onChange={(e) => setPaymentAmount(e.target.value)}
+        placeholder="Beløp"
+        className="h-10 rounded-lg px-3 text-sm outline-none"
+        style={{
+          backgroundColor: "var(--bg-tertiary)",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)",
+        }}
+      />
+
+      <input
+        type="date"
+        value={paymentDate}
+        onChange={(e) => setPaymentDate(e.target.value)}
+        className="h-10 rounded-lg px-3 text-sm outline-none"
+        style={{
+          backgroundColor: "var(--bg-tertiary)",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)",
+        }}
+      />
+
+      <input
+        value={paymentNote}
+        onChange={(e) => setPaymentNote(e.target.value)}
+        placeholder="Kommentar"
+        className="h-10 rounded-lg px-3 text-sm outline-none"
+        style={{
+          backgroundColor: "var(--bg-tertiary)",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)",
+        }}
+      />
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => setShowPaymentForm(false)}
+          className="flex-1 h-10 rounded-lg text-sm"
+          style={{
+            backgroundColor: "var(--bg-tertiary)",
+            color: "var(--text-primary)",
+          }}
+        >
+          Avbryt
+        </button>
+
+        <button
+          onClick={() => {
+            const amount = Number(paymentAmount.replace(",", "."));
+
+            if (!caseId || !amount || amount <= 0) {
+              return;
+            }
+
+            registerPayment.mutate({
+              caseId,
+              amount,
+              paidDate: paymentDate,
+              note: paymentNote || null,
+            });
+          }}
+          disabled={registerPayment.isPending}
+          className="flex-1 h-10 rounded-lg text-sm font-medium"
+          style={{
+            backgroundColor: "var(--accent-yellow)",
+            color: "#0a0a0a",
+            opacity: registerPayment.isPending ? 0.7 : 1,
+          }}
+        >
+          {registerPayment.isPending ? "Lagrer..." : "Lagre"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 overflow-hidden">
@@ -74,10 +191,22 @@ export default function CaseWorkspace({ caseId, onBack }: CaseWorkspaceProps) {
                   <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
                     {doc.detectedType ?? "Ukjent"} · {doc.createdAt}
                   </p>
+
+                  <button
+                    onClick={() => setShowPaymentForm(true)}
+                    className="mt-3 h-9 px-4 rounded-lg text-sm font-medium"
+                    style={{
+                        backgroundColor: "var(--accent-yellow)",
+                        color: "#0a0a0a",
+                    }}
+                    >
+                    Registrer betaling
+                    </button>
                 </div>
               ))
             )}
           </div>
+
         </section>
 
         <section className="rounded-2xl p-5 overflow-y-auto" style={{ backgroundColor: "var(--bg-secondary)" }}>
