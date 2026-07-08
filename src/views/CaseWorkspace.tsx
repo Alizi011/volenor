@@ -17,7 +17,7 @@ export default function CaseWorkspace({ caseId, onBack }: CaseWorkspaceProps) {
   const c = data.case;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-6 gap-6">
+    <div className="flex flex-col h-full overflow-y-auto p-6 gap-6">
       <div className="rounded-2xl p-6" style={{ backgroundColor: "var(--bg-secondary)" }}>
         {onBack && (
           <button

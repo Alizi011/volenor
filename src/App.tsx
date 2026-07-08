@@ -235,41 +235,60 @@ function MainApp() {
               <BankAccounts addToast={addToast} />
             )}
             {currentView === 'debts' && (
-              <Debts
-                cases={debtCases}
-                members={members}
-                documents={documents}
-                onAddCase={addCase}
-                onUpdateCase={updateCase}
-                onDeleteCase={deleteCase}
-                onAddNote={handleAddNote}
-                onAddCommunication={handleAddCommunication}
-                onLinkDocument={(caseId: string, docId: string) => {
-                  const c = debtCases.find((d: any) => d.id === caseId);
-                  if (!c) return;
-                  const ids = [...c.documentIds, docId];
-                  updateCase(caseId, { documentIds: JSON.stringify(ids) });
-                }}
-                onUnlinkDocument={(caseId: string, docId: string) => {
-                  const c = debtCases.find((d: any) => d.id === caseId);
-                  if (!c) return;
-                  const ids = c.documentIds.filter((id: string) => id !== docId);
-                  updateCase(caseId, { documentIds: JSON.stringify(ids) });
-                }}
-                onCloseCase={closeCase}
-                onOpenCase={(caseId) => {
-                setSelectedCaseId(caseId);
-                setCurrentView("caseWorkspace");
-              }}
-                addToast={addToast}
-              />
-            )}
-            {currentView === 'caseWorkspace' && (
-              <CaseWorkspace
-                caseId={selectedCaseId}
-                onBack={() => setCurrentView('debts')}
-              />
-            )}
+  <>
+    <Debts
+      cases={debtCases}
+      members={members}
+      documents={documents}
+      onAddCase={addCase}
+      onUpdateCase={updateCase}
+      onDeleteCase={deleteCase}
+      onAddNote={handleAddNote}
+      onAddCommunication={handleAddCommunication}
+      onLinkDocument={(caseId: string, docId: string) => {
+        const c = debtCases.find((d: any) => d.id === caseId);
+        if (!c) return;
+        const ids = [...c.documentIds, docId];
+        updateCase(caseId, { documentIds: JSON.stringify(ids) });
+      }}
+      onUnlinkDocument={(caseId: string, docId: string) => {
+        const c = debtCases.find((d: any) => d.id === caseId);
+        if (!c) return;
+        const ids = c.documentIds.filter((id: string) => id !== docId);
+        updateCase(caseId, { documentIds: JSON.stringify(ids) });
+      }}
+      onCloseCase={closeCase}
+      onOpenCase={(caseId) => {
+        setSelectedCaseId(caseId);
+      }}
+      addToast={addToast}
+    />
+
+    {selectedCaseId && (
+      <>
+        <div
+          className="fixed inset-0 z-[110]"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+          onClick={() => setSelectedCaseId(null)}
+        />
+
+        <div
+          className="fixed top-0 right-0 h-full w-[900px] max-w-full z-[120]"
+          style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderLeft: '1px solid var(--border-color)',
+          }}
+        >
+          <CaseWorkspace
+            caseId={selectedCaseId}
+            onBack={() => setSelectedCaseId(null)}
+          />
+        </div>
+      </>
+    )}
+  </>
+)}
+            
             {currentView === 'family' && (
               <Family
                 members={members}
