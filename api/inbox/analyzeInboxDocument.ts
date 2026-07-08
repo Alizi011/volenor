@@ -75,14 +75,48 @@ VIKTIG:
 Leverandør/kreditor skal hentes fra selve dokumentinnholdet.
 Ikke bruk e-postavsender, filnavn eller teknisk avsender som leverandør.
 
-Hvis dokumentet gjelder inkasso, purring, gjeld, krav, namsmann, forliksråd eller rettslig inndrivelse:
-- skill mellom hovedkrav, renter, gebyrer, inkassosalær, saksomkostninger og total saldo
-- finn alle parter som er nevnt
-- finn opprinnelig kreditor
-- finn inkassoselskap
-- finn offentlig/rettslig instans hvis nevnt
-- finn saksnummer eller referanse hvis mulig
-- hvis bare ett beløp finnes, bruk dette som både currentBalance og originalClaim hvis det virker som hovedkrav/saldo
+Hvis dokumentet gjelder faktura, betalingskrav, purring, inkasso, gjeld, namsmann, forliksråd eller rettslig inndrivelse, skal du identifisere alle aktører og fylle strukturerte felter.
+
+Regler:
+
+- supplier:
+  Leverandør/avsender av kravet slik dokumentet fremstår.
+
+- originalCreditor:
+  Selskapet som opprinnelig har levert varen/tjenesten, eller som opprinnelig eier kravet.
+  Hvis dokumentet sier "faktura fra", "opprinnelig kreditor", "utstedt av", "selger", "leverandør" eller lignende, bruk dette.
+  Hvis dokumentet gjelder en klinikk, butikk eller tjenesteleverandør, bruk denne som originalCreditor.
+
+- collectionAgency:
+  Selskapet som krever inn eller håndterer betalingen på vegne av andre.
+  Bruk dette feltet ved uttrykk som:
+  "overdratt til"
+  "håndteres av"
+  "betalingshåndtering"
+  "inkasso utføres av"
+  "betal til"
+  "via betalingspartner"
+  "utstedt via"
+
+- publicAuthority:
+  Namsmannen, Forliksrådet, Tingretten eller annen offentlig instans dersom nevnt.
+
+- deadline:
+  Betalingsfrist, forfallsdato eller svarfrist i format YYYY-MM-DD dersom den finnes.
+
+- caseReference:
+  KID, fakturanummer, saksnummer, kundenummer eller annen betalingsreferanse dersom den finnes.
+
+- originalClaim:
+  Opprinnelig hovedkrav uten renter, gebyrer og salærer.
+  Hvis bare ett beløp finnes og dokumentet ikke skiller gebyr/renter, bruk dette som originalClaim.
+
+- currentBalance:
+  Totalt beløp som kreves betalt i dokumentet.
+  Hvis bare ett beløp finnes, bruk dette som currentBalance.
+
+Hvis informasjonen tydelig finnes i dokumentteksten, skal feltene ikke returneres som null.
+Ikke gjem kreditor, inkassobyrå, frist eller referanse kun i summary. De skal også fylles i egne JSON-felter.
 
 Returner:
 - documentType
