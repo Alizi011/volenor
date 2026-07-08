@@ -253,14 +253,14 @@ export function useSynapseBudgets() {
 
 export function useSynapseDebtCases() {
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.synapse.debtCases.list.useQuery();
+  const { data, isLoading } = trpc.synapse.cases.list.useQuery();
   const create = trpc.synapse.debtCases.create.useMutation({ onSuccess: () => { utils.synapse.debtCases.list.invalidate(); } });
   const update = trpc.synapse.debtCases.update.useMutation({ onSuccess: () => utils.synapse.debtCases.list.invalidate() });
   const close = trpc.synapse.debtCases.close.useMutation({ onSuccess: () => utils.synapse.debtCases.list.invalidate() });
   const del = trpc.synapse.debtCases.delete.useMutation({ onSuccess: () => { utils.synapse.debtCases.list.invalidate(); utils.synapse.debtNotes.list.invalidate(); } });
 
   return {
-    cases: (data ?? []).filter((d: any) => d.id != null).map(fmtDebt),
+    cases: (data ?? []).filter((d: any) => d.id != null),
     isLoading,
     addCase: useCallback(
   (c: any) =>

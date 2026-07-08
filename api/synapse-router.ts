@@ -524,6 +524,49 @@ export const synapseRouter = createRouter({
     }),
   }),
 
+  cases: createRouter({
+  list: authedQuery.query(async ({ ctx }) => {
+    const householdId = await getHouseholdIdForUser(ctx.user.id);
+
+    const result: any = await getDb().execute(sql`
+      SELECT *
+      FROM cases
+      WHERE householdId = ${householdId}
+        AND status != 'closed'
+      ORDER BY lastActivityAt DESC, createdAt DESC, id DESC
+    `);
+
+    const rows = Array.isArray(result)
+      ? Array.isArray(result[0])
+        ? result[0]
+        : result
+      : [];
+
+    return rows.map((r: any) => ({
+      id: String(r.id),
+      caseNumber: r.caseNumber,
+      title: r.title,
+      creditor: r.originalCreditor ?? r.title,
+      collector: r.collectionAgency ?? null,
+      type: r.type,
+      status: r.status,
+      priority: r.priority,
+      originalAmount: Number(r.originalClaim ?? r.currentBalance ?? 0) * 100,
+      currentAmount: Number(r.currentBalance ?? 0) * 100,
+      referenceNumber: r.externalReference ?? "",
+      dueDate: r.deadline ?? null,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      closedAt: r.closedAt,
+      documentIds: [],
+      notes: [],
+      communications: [],
+      interestRate: null,
+      memberId: null,
+    }));
+  }),
+}),
+
   debtCases: createRouter({
     list: authedQuery.query(async ({ ctx }) => {
       const householdId = await getHouseholdIdForUser(ctx.user.id);
