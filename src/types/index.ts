@@ -4,7 +4,7 @@ export type TaskStatus = 'new' | 'in_progress' | 'done' | 'archived';
 export type FileType = 'pdf' | 'image' | 'doc';
 export type CalendarView = 'month' | 'week' | 'list';
 export type AppTheme = 'dark' | 'light';
-export type AppView = 'dashboard' | 'documents' | 'tasks' | 'inbox' | 'calendar' | 'finances' | 'bankStatements' |  'bankAccounts' |'debts' | 'family';
+export type AppView = 'dashboard' | 'documents' | 'tasks' | 'inbox' | 'calendar' | 'finances' | 'bankStatements' |  'bankAccounts' |'debts' |'caseWorkspace'| 'family'; 'family';
 export type TransactionType = 'income' | 'expense';
 export type InvoiceStatus = 'paid' | 'pending' | 'overdue';
 

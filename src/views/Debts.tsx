@@ -42,6 +42,7 @@ interface DebtsProps {
   onLinkDocument: (caseId: string, docId: string) => void;
   onUnlinkDocument: (caseId: string, docId: string) => void;
   onCloseCase: (caseId: string) => void;
+  onOpenCase: (caseId: number) => void;
   addToast: (type: 'success' | 'info' | 'warning' | 'error', message: string) => void;
 }
 
@@ -73,7 +74,7 @@ const COMM_TYPE_CONFIG: Record<CommunicationType, { label: string; icon: React.E
 export default function Debts({
   cases, members, documents,
   onAddCase, onUpdateCase, onDeleteCase, onAddNote, onAddCommunication,
-  onLinkDocument, onUnlinkDocument, onCloseCase, addToast,
+  onLinkDocument, onUnlinkDocument, onCloseCase, onOpenCase, addToast,
 }: DebtsProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMember, setFilterMember] = useState<string>('all');
@@ -315,6 +316,17 @@ export default function Debts({
                   style={{ color: 'var(--accent-red)' }}
                   title="Slett sak"
                 >
+                  <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenCase(Number(c.id));
+                  }}
+                  className="p-1 rounded-lg"
+                  title="Åpne arbeidsområde"
+                >
+                  <ArrowUpRight size={16} />
+                </button>
+
                   <Trash2 size={16} />
                 </button>
 

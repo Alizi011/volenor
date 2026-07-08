@@ -770,9 +770,8 @@ export const synapseRouter = createRouter({
 
         return { success: true };
           }),
-
-           workspace: workspaceRouter,
   }),
+    workspace: workspaceRouter,
 });
 
 export const adminRouter = createRouter({

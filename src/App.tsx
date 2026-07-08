@@ -35,12 +35,14 @@ import Family from './views/Family';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import CaseWorkspace from "./views/CaseWorkspace";
 
 /* ═══════════════════════════════════════════
    MAIN APP — with sidebar + all views
    ═══════════════════════════════════════════ */
 function MainApp() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
+  const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
   const { settings, setSettings } = useSettings();
   const { toasts, addToast, removeToast } = useToast();
 
@@ -255,7 +257,17 @@ function MainApp() {
                   updateCase(caseId, { documentIds: JSON.stringify(ids) });
                 }}
                 onCloseCase={closeCase}
+                onOpenCase={(caseId) => {
+                setSelectedCaseId(caseId);
+                setCurrentView("caseWorkspace");
+              }}
                 addToast={addToast}
+              />
+            )}
+            {currentView === 'caseWorkspace' && (
+              <CaseWorkspace
+                caseId={selectedCaseId}
+                onBack={() => setCurrentView('debts')}
               />
             )}
             {currentView === 'family' && (
