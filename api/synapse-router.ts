@@ -549,8 +549,16 @@ export const synapseRouter = createRouter({
       creditor: r.originalCreditor ?? r.title,
       collector: r.collectionAgency ?? null,
       type: r.type,
-      status: r.status,
-      priority: r.priority,
+     status:
+  r.status === "active" ? "open" :
+  r.status === "closed" ? "closed" :
+  "open",
+
+priority:
+  r.priority === "urgent" ? "critical" :
+  r.priority === "high" ? "high" :
+  r.priority === "low" ? "low" :
+  "medium",
       originalAmount: Number(r.originalClaim ?? r.currentBalance ?? 0) * 100,
       currentAmount: Number(r.currentBalance ?? 0) * 100,
       referenceNumber: r.externalReference ?? "",

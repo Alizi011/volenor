@@ -260,7 +260,9 @@ export function useSynapseDebtCases() {
   const del = trpc.synapse.debtCases.delete.useMutation({ onSuccess: () => { utils.synapse.debtCases.list.invalidate(); utils.synapse.debtNotes.list.invalidate(); } });
 
   return {
-    cases: (data ?? []).filter((d: any) => d.id != null),
+    cases: (data ?? [])
+  .filter((d: any) => d.id != null)
+  .map(fmtDebt),
     isLoading,
     addCase: useCallback(
   (c: any) =>
