@@ -41,6 +41,14 @@ const registerPayment =
 
   const c = data.case;
 
+const paidAmount = (data.finance ?? [])
+  .filter((f: any) => f.status === "paid")
+  .reduce(
+    (sum: number, f: any) =>
+      sum + Number(f.originalAmount ?? f.currentAmount ?? 0),
+    0
+  );
+
   return (
     <div className="flex flex-col h-full overflow-y-auto p-6 gap-6">
       <div className="rounded-2xl p-6" style={{ backgroundColor: "var(--bg-secondary)" }}>
@@ -79,8 +87,109 @@ const registerPayment =
             </p>
           </div>
         </div>
-        
-          {showPaymentForm && (
+
+        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4 mt-6">
+          <KpiCard
+            title="Originalt krav"
+            value={`${Number(c.originalAmount ?? 0).toLocaleString("nb-NO")} kr`}
+          />
+
+         <KpiCard
+            title="Betalt"
+            value={`${paidAmount.toLocaleString("nb-NO")} kr`}
+            />
+
+          <KpiCard
+            title="Utestående"
+            value={`${Number(c.currentBalance ?? 0).toLocaleString("nb-NO")} kr`}
+          />
+
+          <KpiCard
+            title="Status"
+            value={c.status ?? "-"}
+          />
+
+          <KpiCard
+            title="Forfall"
+            value={c.deadline ?? "-"}
+          />
+        </div>
+
+<div className="flex justify-end mt-4">
+  <button
+    onClick={() => setShowPaymentForm(true)}
+    className="h-10 px-5 rounded-lg text-sm font-medium"
+    style={{
+      backgroundColor: "var(--accent-yellow)",
+      color: "#0a0a0a",
+    }}
+  >
+    Registrer betaling
+  </button>
+</div>
+
+<div
+  className="rounded-2xl p-5 mt-4"
+  style={{ backgroundColor: "var(--bg-secondary)" }}
+>
+  <h2
+    className="text-sm font-semibold mb-4"
+    style={{ color: "var(--text-primary)" }}
+  >
+    Betalingshistorikk
+  </h2>
+
+  {data.finance.filter((f: any) => f.status === "paid").length === 0 ? (
+    <p
+      className="text-sm"
+      style={{ color: "var(--text-secondary)" }}
+    >
+      Ingen registrerte betalinger.
+    </p>
+  ) : (
+    <div className="space-y-3">
+      {data.finance
+        .filter((f: any) => f.status === "paid")
+        .map((payment: any) => (
+          <div
+            key={payment.id}
+            className="flex items-center justify-between rounded-xl p-3"
+            style={{ backgroundColor: "var(--bg-primary)" }}
+          >
+            <div>
+              <div
+                className="text-sm font-medium"
+                style={{ color: "var(--text-primary)" }}
+              >
+                {payment.paidDate ?? "-"}
+              </div>
+
+              <div
+                className="text-xs"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {payment.notes ?? "Ingen kommentar"}
+              </div>
+            </div>
+
+            <div
+              className="text-sm font-semibold"
+              style={{ color: "var(--accent-green)" }}
+            >
+              {Number(
+                payment.originalAmount ??
+                payment.currentAmount ??
+                0
+              ).toLocaleString("nb-NO")} kr
+            </div>
+          </div>
+        ))}
+    </div>
+  )}
+</div>
+
+{showPaymentForm && (
+
   <div
     className="rounded-2xl p-5"
     style={{ backgroundColor: "var(--bg-secondary)" }}
@@ -192,16 +301,7 @@ const registerPayment =
                     {doc.detectedType ?? "Ukjent"} · {doc.createdAt}
                   </p>
 
-                  <button
-                    onClick={() => setShowPaymentForm(true)}
-                    className="mt-3 h-9 px-4 rounded-lg text-sm font-medium"
-                    style={{
-                        backgroundColor: "var(--accent-yellow)",
-                        color: "#0a0a0a",
-                    }}
-                    >
-                    Registrer betaling
-                    </button>
+                  
                 </div>
               ))
             )}
@@ -260,6 +360,35 @@ const registerPayment =
           </div>
         </section>
       </div>
+    </div>
+  );
+}
+
+function KpiCard({
+  title,
+  value,
+}: {
+  title: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-xl p-4"
+      style={{ backgroundColor: "var(--bg-primary)" }}
+    >
+      <p
+        className="text-xs uppercase mb-2"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        {title}
+      </p>
+
+      <p
+        className="text-xl font-semibold"
+        style={{ color: "var(--text-primary)" }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
