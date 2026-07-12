@@ -90,9 +90,9 @@ const paidAmount = (data.finance ?? [])
 
         <div className="grid grid-cols-2 xl:grid-cols-5 gap-4 mt-6">
           <KpiCard
-            title="Originalt krav"
-            value={`${Number(c.originalAmount ?? 0).toLocaleString("nb-NO")} kr`}
-          />
+         title="Originalt krav"
+        value={`${Number(c.originalClaim ?? 0).toLocaleString("nb-NO")} kr`}
+        />
 
          <KpiCard
             title="Betalt"
@@ -337,28 +337,107 @@ const paidAmount = (data.finance ?? [])
           </div>
         </section>
 
-        <section className="rounded-2xl p-5 overflow-y-auto" style={{ backgroundColor: "var(--bg-secondary)" }}>
-          <h2 className="flex items-center gap-2 text-sm font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
-            <Bot size={18} /> AI og nøkkelinfo
-          </h2>
+       <section
+  className="rounded-2xl p-5 overflow-y-auto"
+  style={{ backgroundColor: "var(--bg-secondary)" }}
+>
+  <h2
+    className="flex items-center gap-2 text-sm font-semibold mb-4"
+    style={{ color: "var(--text-primary)" }}
+  >
+    <Bot size={18} /> Saksdetaljer
+  </h2>
 
-          <div className="space-y-4 text-sm">
-            <div>
-              <p className="text-xs uppercase mb-1" style={{ color: "var(--text-secondary)" }}>Oppsummering</p>
-              <p style={{ color: "var(--text-primary)" }}>
-                {data.aiSummary ?? "Ingen AI-oppsummering ennå."}
+  <div className="space-y-4 text-sm">
+    <div
+      className="rounded-xl p-3 space-y-2"
+      style={{ backgroundColor: "var(--bg-primary)" }}
+    >
+      <Info label="Kreditor" value={c.originalCreditor} />
+      <Info label="Inkassobyrå" value={c.collectionAgency} />
+      <Info label="Offentlig instans" value={c.publicAuthority} />
+      <Info label="Status" value={c.status} />
+      <Info label="Prioritet" value={c.priority} />
+      <Info label="Frist" value={c.deadline} />
+      <Info label="Referanse" value={c.externalReference} />
+    </div>
+
+    <div
+      className="rounded-xl p-3"
+      style={{ backgroundColor: "var(--bg-primary)" }}
+    >
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h3
+          className="text-xs uppercase"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          Notater
+        </h3>
+
+        <span
+          className="text-xs"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          {data.statistics.noteCount ?? 0}
+        </span>
+      </div>
+
+      {(data.notes ?? []).length === 0 ? (
+        <p
+          className="text-sm"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          Ingen notater ennå.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {(data.notes ?? []).map((note: any) => (
+            <div
+              key={note.id}
+              className="rounded-lg p-3"
+              style={{ backgroundColor: "var(--bg-secondary)" }}
+            >
+              <p
+                className="text-sm whitespace-pre-wrap"
+                style={{ color: "var(--text-primary)" }}
+              >
+                {note.note}
+              </p>
+
+              <p
+                className="text-xs mt-2"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {note.createdAt
+                  ? new Date(note.createdAt).toLocaleString("nb-NO")
+                  : "Ukjent tidspunkt"}
               </p>
             </div>
+          ))}
+        </div>
+      )}
+    </div>
 
-            <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--bg-primary)" }}>
-              <Info label="Kreditor" value={c.originalCreditor} />
-              <Info label="Inkassobyrå" value={c.collectionAgency} />
-              <Info label="Offentlig instans" value={c.publicAuthority} />
-              <Info label="Frist" value={c.deadline} />
-              <Info label="Referanse" value={c.externalReference} />
-            </div>
-          </div>
-        </section>
+    <div
+      className="rounded-xl p-3"
+      style={{ backgroundColor: "var(--bg-primary)" }}
+    >
+      <h3
+        className="text-xs uppercase mb-2"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        AI-oppsummering
+      </h3>
+
+      <p
+        className="whitespace-pre-wrap"
+        style={{ color: "var(--text-primary)" }}
+      >
+        {data.aiSummary ?? "Ingen AI-oppsummering ennå."}
+      </p>
+    </div>
+  </div>
+</section>
       </div>
     </div>
   );
