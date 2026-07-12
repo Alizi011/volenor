@@ -58,6 +58,42 @@ const financeResult: any = await db.execute(sql`
 
 const finance = normalizeRows(financeResult);
 
+const notesResult: any = await db.execute(sql`
+  SELECT *
+  FROM case_notes
+  WHERE caseId = ${caseId}
+  ORDER BY createdAt DESC, id DESC
+`);
+
+const notes = normalizeRows(notesResult);
+
+const partiesResult: any = await db.execute(sql`
+  SELECT *
+  FROM case_parties
+  WHERE caseId = ${caseId}
+  ORDER BY createdAt DESC, id DESC
+`);
+
+const parties = normalizeRows(partiesResult);
+
+const communicationsResult: any = await db.execute(sql`
+  SELECT *
+  FROM case_communications
+  WHERE caseId = ${caseId}
+  ORDER BY createdAt DESC, id DESC
+`);
+
+const communications = normalizeRows(communicationsResult);
+
+const journalResult: any = await db.execute(sql`
+  SELECT *
+  FROM case_journal
+  WHERE caseId = ${caseId}
+  ORDER BY createdAt DESC, id DESC
+`);
+
+const journal = normalizeRows(journalResult);
+
 return {
 
   case: currentCase,
@@ -67,16 +103,25 @@ return {
   events,
 
   finance,
+  
+  notes,
+
+  parties,
 
   communications: [],
 
+  journal,
+
   aiSummary: currentCase.summary ?? null,
 
-  statistics: {
-    documentCount: documents.length,
-    eventCount: events.length,
-    financeCount: finance.length,
-    communicationCount: 0,
-  },
+ statistics: {
+  documentCount: documents.length,
+  eventCount: events.length,
+  financeCount: finance.length,
+  noteCount: notes.length,
+  partyCount: parties.length,
+  communicationCount: communications.length,
+  journalCount: journal.length,
+},
 };
 }
