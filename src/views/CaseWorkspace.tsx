@@ -19,6 +19,7 @@ const [paymentDate, setPaymentDate] = useState(
   new Date().toISOString().slice(0, 10)
 );
 const [paymentNote, setPaymentNote] = useState("");
+const [newCaseNote, setNewCaseNote] = useState("");
 
 const registerPayment =
   trpc.synapse.workspace.registerPayment.useMutation({
@@ -30,6 +31,17 @@ const registerPayment =
       setShowPaymentForm(false);
       setPaymentAmount("");
       setPaymentNote("");
+    },
+  });
+
+const addNote =
+  trpc.synapse.workspace.addNote.useMutation({
+    onSuccess: async () => {
+      await utils.synapse.workspace.get.invalidate({
+        caseId: caseId ?? 0,
+      });
+
+      setNewCaseNote("");
     },
   });
   
@@ -381,6 +393,59 @@ const paidAmount = (data.finance ?? [])
           {data.statistics.noteCount ?? 0}
         </span>
       </div>
+      
+      <div className="space-y-2 mb-4">
+  <textarea
+    value={newCaseNote}
+    onChange={(e) => setNewCaseNote(e.target.value)}
+    placeholder="Skriv et notat om saken..."
+    rows={3}
+    className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-y"
+    style={{
+      backgroundColor: "var(--bg-secondary)",
+      color: "var(--text-primary)",
+      border: "1px solid var(--border-color)",
+    }}
+  />
+
+  <button
+    type="button"
+    onClick={() => {
+      const note = newCaseNote.trim();
+
+      if (!caseId || !note) {
+        return;
+      }
+
+      addNote.mutate({
+        caseId,
+        note,
+      });
+    }}
+    disabled={addNote.isPending || !newCaseNote.trim()}
+    className="w-full h-9 rounded-lg text-sm font-medium"
+    style={{
+      backgroundColor: "var(--accent-yellow)",
+      color: "#0a0a0a",
+      opacity:
+        addNote.isPending || !newCaseNote.trim()
+          ? 0.6
+          : 1,
+    }}
+  >
+    {addNote.isPending ? "Lagrer..." : "Legg til notat"}
+  </button>
+
+  {addNote.error && (
+    <p
+      className="text-xs"
+      style={{ color: "var(--accent-red)" }}
+    >
+      {addNote.error.message}
+    </p>
+  )}
+</div>
+
 
       {(data.notes ?? []).length === 0 ? (
         <p
