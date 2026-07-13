@@ -294,7 +294,7 @@ const paidAmount = (data.finance ?? [])
 
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 overflow-hidden">
+     <div className="flex flex-col gap-6">
         <section className="rounded-2xl p-5 overflow-y-auto" style={{ backgroundColor: "var(--bg-secondary)" }}>
           <h2 className="flex items-center gap-2 text-sm font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
             <FileText size={18} /> Dokumenter ({data.statistics.documentCount})
