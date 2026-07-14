@@ -1,4 +1,10 @@
-import { FileText, History, Bot, ArrowLeft } from "lucide-react";
+import {
+  FileText,
+  History,
+  Bot,
+  ArrowLeft,
+  ExternalLink,
+} from "lucide-react";
 import { useCaseWorkspace } from "@/hooks/useCaseWorkspace";
 import { useState } from "react";
 import { trpc } from "@/providers/trpc";
@@ -52,6 +58,32 @@ const addNote =
   if (!data) return <div className="p-6">Ingen data.</div>;
 
   const c = data.case;
+
+  const primaryDocument = data.documents?.[0];
+
+  const displayedCreditor =
+  c.originalCreditor ??
+  primaryDocument?.detectedSender ??
+  c.title ??
+  null;
+
+const displayedDeadline =
+  c.deadline ??
+  primaryDocument?.detectedDueDate ??
+  null;
+
+const displayedCollectionAgency =
+  c.collectionAgency ??
+  (
+    data.aiSummary?.includes("PayEx")
+      ? "PayEx Sverige AB"
+      : null
+  );
+
+const displayedReference =
+  c.externalReference ??
+  primaryDocument?.subject ??
+  null;
 
 const paidAmount = (data.finance ?? [])
   .filter((f: any) => f.status === "paid")
@@ -304,18 +336,63 @@ const paidAmount = (data.finance ?? [])
             {data.documents.length === 0 ? (
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Ingen dokumenter.</p>
             ) : (
-              data.documents.map((doc: any) => (
-                <div key={doc.id} className="rounded-xl p-3" style={{ backgroundColor: "var(--bg-primary)" }}>
-                  <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
-                    {doc.fileName}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
-                    {doc.detectedType ?? "Ukjent"} · {doc.createdAt}
-                  </p>
+data.documents.map((doc: any) => {
+  const documentUrl = doc.fileUrl
+    ? String(doc.fileUrl).startsWith("/")
+      ? doc.fileUrl
+      : `/${doc.fileUrl}`
+    : null;
 
-                  
-                </div>
-              ))
+  return (
+    <div
+      key={doc.id}
+      className="rounded-xl p-4"
+      style={{ backgroundColor: "var(--bg-primary)" }}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p
+            className="text-sm font-medium truncate"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {doc.fileName ?? "Dokument"}
+          </p>
+
+          <p
+            className="text-xs mt-1"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {doc.detectedType ?? "Ukjent"} · {doc.createdAt}
+          </p>
+        </div>
+
+        {documentUrl && (
+          <button
+            type="button"
+            onClick={() => window.open(documentUrl, "_blank", "noopener,noreferrer")}
+            className="flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium shrink-0"
+            style={{
+              backgroundColor: "var(--accent-yellow)",
+              color: "#0a0a0a",
+            }}
+          >
+            <ExternalLink size={15} />
+            Åpne dokument
+          </button>
+        )}
+      </div>
+
+      {!documentUrl && (
+        <p
+          className="text-xs mt-3"
+          style={{ color: "var(--accent-red)" }}
+        >
+          Dokumentet mangler filsti.
+        </p>
+      )}
+    </div>
+  );
+})
             )}
           </div>
 
@@ -365,13 +442,19 @@ const paidAmount = (data.finance ?? [])
       className="rounded-xl p-3 space-y-2"
       style={{ backgroundColor: "var(--bg-primary)" }}
     >
-      <Info label="Kreditor" value={c.originalCreditor} />
-      <Info label="Inkassobyrå" value={c.collectionAgency} />
-      <Info label="Offentlig instans" value={c.publicAuthority} />
-      <Info label="Status" value={c.status} />
-      <Info label="Prioritet" value={c.priority} />
-      <Info label="Frist" value={c.deadline} />
-      <Info label="Referanse" value={c.externalReference} />
+      <Info label="Kreditor" value={displayedCreditor} />
+<Info
+  label="Inkassobyrå"
+  value={displayedCollectionAgency}
+/>
+<Info label="Offentlig instans" value={c.publicAuthority} />
+<Info label="Status" value={c.status} />
+<Info label="Prioritet" value={c.priority} />
+<Info label="Frist" value={displayedDeadline} />
+<Info
+  label="Referanse"
+  value={displayedReference}
+/>
     </div>
 
     <div
