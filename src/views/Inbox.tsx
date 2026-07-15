@@ -127,6 +127,11 @@ const handleAnalyzeEmailDocument = async (id: number) => {
   }
 };
 
+const visibleEmailDocuments =
+  emailInboxDocuments.filter((doc) => {
+    return !doc.caseId;
+  });
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Header title="INNBOKS" inboxCount={inbox.length} />
@@ -285,13 +290,13 @@ const handleAnalyzeEmailDocument = async (id: number) => {
           </div>
         )}
 
-        {emailInboxDocuments.length > 0 && (
+        {visibleEmailDocuments.length > 0 && (
   <div className="space-y-3 mt-6">
     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
       Dokumenter mottatt via e-post
     </p>
 
-    {emailInboxDocuments.map((doc, i) => (
+    {visibleEmailDocuments.map((doc, i) => (
       <motion.div
         key={doc.id ?? `email-inbox-${i}`}
         initial={{ opacity: 0, y: 10 }}
