@@ -9,22 +9,58 @@ function normalizeRows(result: any): any[] {
     : [];
 }
 
-export async function findMatchingCase(analysis: any) {
-  const caseReference = analysis.caseReference;
+export async function findMatchingCase(
+  analysis: any
+) {
+  const db = getDb();
 
-  if (!caseReference) {
+  //
+  // 1. Match på saksreferanse
+  //
+  if (analysis.caseReference) {
+    const referenceResult: any =
+      await db.execute(sql`
+        SELECT *
+        FROM cases
+        WHERE externalReference =
+          ${analysis.caseReference}
+        ORDER BY id DESC
+        LIMIT 1
+      `);
+
+    const referenceRows =
+      normalizeRows(referenceResult);
+
+    if (referenceRows.length > 0) {
+      return referenceRows[0];
+    }
+  }
+
+  //
+  // 2. Match på opprinnelig kreditor
+  //
+  const supplier =
+    analysis.originalCreditor ??
+    analysis.supplier;
+
+  if (!supplier) {
     return null;
   }
 
-  const result: any = await getDb().execute(sql`
-    SELECT *
-    FROM cases
-    WHERE externalReference = ${caseReference}
-    ORDER BY id DESC
-    LIMIT 1
-  `);
+  const supplierResult: any =
+    await db.execute(sql`
+      SELECT *
+      FROM cases
+      WHERE
+        LOWER(title) = LOWER(${supplier})
+        OR LOWER(originalCreditor) =
+           LOWER(${supplier})
+      ORDER BY id DESC
+      LIMIT 1
+    `);
 
-  const rows = normalizeRows(result);
+  const supplierRows =
+    normalizeRows(supplierResult);
 
-  return rows[0] ?? null;
+  return supplierRows[0] ?? null;
 }
