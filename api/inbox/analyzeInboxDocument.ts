@@ -97,6 +97,18 @@ Regler:
   "betal til"
   "via betalingspartner"
   "utstedt via"
+  "fordret av"
+  "inkassobyrå"
+  "betalingspartner"
+  "oppdragsgiver"
+
+  Dersom dokumentet nevner et inkasso- eller betalingsselskap som
+  Zolva, Intrum, Kredinor, Lowell, Axactor, Fair Collection,
+  Gothia, Sergel, Riverty eller Visma Financial Solutions,
+  og selskapet håndterer innkreving eller betaling,
+  skal navnet alltid legges i collectionAgency.
+
+  Ikke legg inkassobyrået bare i summary.
 
 - publicAuthority:
   Namsmannen, Forliksrådet, Tingretten eller annen offentlig instans dersom nevnt.
@@ -240,6 +252,41 @@ ${text.slice(0, 12000)}
   });
 
   const analysis = JSON.parse(aiResponse.output_text);
+
+  const knownCollectionAgencies = [
+  { search: "zolva", name: "Zolva" },
+  { search: "intrum", name: "Intrum" },
+  { search: "kredinor", name: "Kredinor" },
+  { search: "lowell", name: "Lowell" },
+  { search: "axactor", name: "Axactor" },
+  { search: "fair collection", name: "Fair Collection" },
+  { search: "gothia", name: "Gothia" },
+  { search: "sergel", name: "Sergel" },
+  { search: "riverty", name: "Riverty" },
+  {
+    search: "visma financial solutions",
+    name: "Visma Financial Solutions",
+  },
+];
+
+if (!analysis.collectionAgency) {
+  const searchableText = [
+    analysis.summary,
+    analysis.reason,
+    text,
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .toLowerCase();
+
+  const matchedAgency = knownCollectionAgencies.find((agency) =>
+    searchableText.includes(agency.search)
+  );
+
+  if (matchedAgency) {
+    analysis.collectionAgency = matchedAgency.name;
+  }
+}
 
   const resolvedCase = await processInboxDocument(doc, analysis);
 
